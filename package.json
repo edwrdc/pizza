@@ -1,0 +1,13 @@
+{
+  "name": "pizza",
+  "version": "1.0.0",
+  "description": "These are commands I use with agents, mostly pi",
+  "keywords": ["pi-package"],
+  "type": "module",
+  "pi": {
+    "extensions": ["./extensions"],
+    "prompts": ["./prompts"],
+    "skills": ["./skills"],
+    "themes": ["./themes"]
+  }
+}
