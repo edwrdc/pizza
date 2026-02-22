@@ -1,6 +1,6 @@
 /**
  * Command Alias Extension - Maps /clear to /new
- * 
+ *
  * This extension registers /clear as a command that executes /new,
  * creating a new session. This provides a familiar alias for users who
  * are used to typing /clear from other tools.
@@ -12,8 +12,8 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("clear", {
 		description: "Alias for /new - Start a new session",
 		handler: async (_args, ctx) => {
-			// Send /new as a user message to trigger the built-in command
-			pi.sendUserMessage("/new");
+			// Create a new session directly using the command context
+			await ctx.newSession();
 		},
 	});
 }
