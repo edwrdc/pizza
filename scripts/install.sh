@@ -24,6 +24,10 @@ echo "==> Installing external extensions"
 pi install npm:@tintinweb/pi-subagents
 pi install npm:pi-mcp-adapter
 
+# Symlink MCP config (pizza is source of truth for global MCP servers)
+mkdir -p ~/.pi/agent
+ln -sf "$ROOT_DIR/mcp.json" ~/.pi/agent/mcp.json
+
 cat <<EOF
 
 Pizza installed!
