@@ -103,6 +103,8 @@ ln -sf "$(pwd)/agents/auditor.md" ~/.pi/agent/agents/auditor.md
 
 Commit when done. Use in pi: `Agent({ subagent_type: "auditor", prompt: "...", description: "..." })`
 
+**Note:** Model changes in agents (e.g., swapping `model: haiku` for `model: sonnet`) are minor tweaks. Don't mention them in commit messages — just lump them in with other changes.
+
 ### Adding an Extension
 
 **Small/simple extensions** - Add directly to `extensions/`:

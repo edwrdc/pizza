@@ -4,7 +4,7 @@ display_name: Svelte File Editor
 tools: read, write, edit, bash, grep, find, ls
 skills: svelte-code-writer, svelte-core-bestpractices
 mcp: svelte
-model: glm-5
+model: openai/gpt-5.4
 thinking: medium
 max_turns: 30
 ---
