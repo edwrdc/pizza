@@ -18,6 +18,19 @@ npm run setup
 
 This runs `pi install .` which registers pizza with pi. The repo stays at `~/code/pizza/` - pi references it directly.
 
+After setup, symlink agents and skills for multi-harness support:
+```bash
+# Symlink agents (for pi-subagents)
+for agent in agents/*.md; do
+  ln -sf ~/code/pizza/$agent ~/.pi/agent/agents/$(basename $agent)
+done
+
+# Symlink skills (for Claude Code, Codex, OpenCode)
+for skill in skills/*/; do
+  ln -sfn ~/code/pizza/$skill ~/.agents/skills/$(basename $skill)
+done
+```
+
 ## Prerequisites
 
 - `pi` - pi coding agent
@@ -31,6 +44,7 @@ pizza/
 ├── scripts/install.sh   # Setup script
 ├── extensions/          # Custom extensions (small ones)
 ├── skills/              # Skills (copied + modified)
+├── agents/              # Custom subagent definitions
 ├── prompts/             # Prompt templates (currently empty)
 └── package.json         # Pi package manifest
 ```
@@ -64,6 +78,30 @@ ln -s ~/code/pizza/skills/some-skill ~/.agents/skills/some-skill
 ```
 
 Changes reflect immediately after `/reload` in pi.
+
+### Adding a Subagent
+
+Custom subagents are defined as `.md` files in `agents/`:
+
+```markdown
+<!-- agents/auditor.md -->
+---
+description: Security Code Reviewer
+tools: read, grep, find, bash
+model: haiku
+thinking: high
+max_turns: 30
+---
+
+You are a security auditor. Review code for vulnerabilities...
+```
+
+Then symlink to `~/.pi/agent/agents/`:
+```bash
+ln -sf ~/code/pizza/agents/auditor.md ~/.pi/agent/agents/auditor.md
+```
+
+Commit when done. Use in pi: `Agent({ subagent_type: "auditor", prompt: "...", description: "..." })`
 
 ### Adding an Extension
 
