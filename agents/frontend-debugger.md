@@ -2,7 +2,8 @@
 description: Frontend debugger using agent-browser CLI
 display_name: Frontend Debugger
 tools: read, bash, grep, find, ls
-model: haiku
+skills: agent-browser
+model: glm-5
 thinking: medium
 max_turns: 50
 ---
