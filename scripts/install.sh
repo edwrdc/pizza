@@ -19,6 +19,10 @@ cd "$ROOT_DIR"
 echo "==> Installing pizza"
 pi install .
 
+# External extensions
+echo "==> Installing external extensions"
+pi install npm:@tintinweb/pi-subagents
+
 cat <<EOF
 
 Pizza installed!
