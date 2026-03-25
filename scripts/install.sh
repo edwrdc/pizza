@@ -22,6 +22,7 @@ pi install .
 # External extensions
 echo "==> Installing external extensions"
 pi install npm:@tintinweb/pi-subagents
+pi install npm:pi-mcp-adapter
 
 cat <<EOF
 
