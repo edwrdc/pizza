@@ -5,6 +5,6 @@ Copied from [nicobailon/visual-explainer](https://github.com/nicobailon/visual-e
 - **Author:** nicobailon
 - **Version:** 0.5.1
 - **License:** MIT
-- **Copied:** 2025-03-25
+- **Copied:** 2026-03-25
 
 May contain local modifications.
