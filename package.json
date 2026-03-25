@@ -1,9 +1,12 @@
 {
   "name": "pizza",
   "version": "1.0.0",
-  "description": "These are commands I use with agents, mostly pi",
+  "description": "Personal pi package - skills, extensions, and prompts",
   "keywords": ["pi-package"],
   "type": "module",
+  "scripts": {
+    "setup": "./scripts/install.sh"
+  },
   "pi": {
     "extensions": ["./extensions"],
     "prompts": ["./prompts"],

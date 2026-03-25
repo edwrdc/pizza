@@ -1,15 +1,16 @@
 # 🍕 pizza
 
-These are commands I use with agents, mostly pi.
+Personal pi package with skills, extensions, and prompts I use.
 
 ## Install
 
 ```bash
-# Install dependencies first
-pi install git:github.com/ghoseb/pi-askuserquestion
+# Clone the repo
+git clone git@github.com:edwrdc/pizza.git ~/code/pizza
+# or using GitHub CLI: gh repo clone edwrdc/pizza ~/code/pizza
 
-# Then install this package
-pi install git:github.com/edwrdc/pizza
+cd ~/code/pizza
+npm run setup
 ```
 
 ## What's Inside
@@ -17,23 +18,54 @@ pi install git:github.com/edwrdc/pizza
 | Directory | Contents |
 |-----------|----------|
 | `extensions/` | Custom pi extensions |
+| `skills/` | Skills (copied + modified for my use) |
 | `prompts/` | Reusable prompt templates |
-| `skills/` | Custom skills |
 | `themes/` | Custom themes |
 
-## Development
+### Skills
+
+- `visual-explainer` - Generate HTML diagrams and visualizations
+
+### Extensions
+
+- `clear` - `/clear` alias for `/new`
+
+## Adding New Stuff
+
+### Skills
 
 ```bash
-# Clone for development
-cd ~/code
-git clone git@github.com:edwrdc/pizza.git
-
-# Symlink to pi's extensions
-ln -s ~/code/pizza/extensions ~/.pi/agent/extensions/pizza-dev
-
-# Reload pi after changes
-/reload
+# Copy a skill into pizza
+cp -r ~/.agents/skills/some-skill ./skills/
 ```
+
+### Extensions
+
+Create `.ts` files in `extensions/`:
+
+```typescript
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+
+export default function (pi: ExtensionAPI) {
+  pi.registerCommand("mycommand", {
+    description: "Does something",
+    handler: async (_args, ctx) => {
+      // ...
+    },
+  });
+}
+```
+
+### Prompts
+
+Create `.md` files in `prompts/`:
+
+```markdown
+Review this code for bugs and security issues.
+Focus on: {{focus}}
+```
+
+Use with `/filename` in pi.
 
 ## License
 

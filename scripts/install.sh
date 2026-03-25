@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+need_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "Missing required command: $1" >&2
+    exit 1
+  fi
+}
+
+need_cmd node
+need_cmd npm
+need_cmd pi
+
+cd "$ROOT_DIR"
+
+echo "==> Installing pizza"
+pi install .
+
+cat <<EOF
+
+Pizza installed!
+
+Installed packages:
+  - pizza (skills, extensions, prompts)
+
+You can now run pi in any project.
+EOF
