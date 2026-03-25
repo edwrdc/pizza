@@ -6,28 +6,28 @@ This is a personal pi package containing skills, extensions, and prompts. It's d
 
 ```bash
 # Using git
-git clone git@github.com:edwrdc/pizza.git ~/code/pizza
+git clone git@github.com:edwrdc/pizza.git
 
 # Or using GitHub CLI
-gh repo clone edwrdc/pizza ~/code/pizza
+gh repo clone edwrdc/pizza
 # See gh dl --help for other options
 
-cd ~/code/pizza
+cd pizza
 npm run setup
 ```
 
-This runs `pi install .` which registers pizza with pi. The repo stays at `~/code/pizza/` - pi references it directly.
+This runs `pi install .` which registers pizza with pi. The repo stays wherever you cloned it - pi references it directly.
 
-After setup, symlink agents and skills for multi-harness support:
+After setup, symlink agents and skills for multi-harness support (run from pizza directory):
 ```bash
 # Symlink agents (for pi-subagents)
 for agent in agents/*.md; do
-  ln -sf ~/code/pizza/$agent ~/.pi/agent/agents/$(basename $agent)
+  ln -sf "$(pwd)/$agent" ~/.pi/agent/agents/$(basename $agent)
 done
 
 # Symlink skills (for Claude Code, Codex, OpenCode)
 for skill in skills/*/; do
-  ln -sfn ~/code/pizza/$skill ~/.agents/skills/$(basename $skill)
+  ln -sfn "$(pwd)/$skill" ~/.agents/skills/$(basename $skill)
 done
 ```
 
@@ -74,7 +74,7 @@ git push
 Then symlink to `~/.agents/skills/` for multi-harness support (Claude Code, Codex, OpenCode):
 ```bash
 rm -rf ~/.agents/skills/some-skill
-ln -s ~/code/pizza/skills/some-skill ~/.agents/skills/some-skill
+ln -s "$(pwd)/skills/some-skill" ~/.agents/skills/some-skill
 ```
 
 Changes reflect immediately after `/reload` in pi.
@@ -98,7 +98,7 @@ You are a security auditor. Review code for vulnerabilities...
 
 Then symlink to `~/.pi/agent/agents/`:
 ```bash
-ln -sf ~/code/pizza/agents/auditor.md ~/.pi/agent/agents/auditor.md
+ln -sf "$(pwd)/agents/auditor.md" ~/.pi/agent/agents/auditor.md
 ```
 
 Commit when done. Use in pi: `Agent({ subagent_type: "auditor", prompt: "...", description: "..." })`
@@ -114,18 +114,22 @@ cp my-extension.ts ./extensions/
 
 Then commit and `/reload`.
 
-**Big/complex extensions** (like pi-agents, pi-mcp-access) - Don't copy. Instead, add to `scripts/install.sh`:
+**External extensions** (npm packages, git repos) - Don't copy. Add to `scripts/install.sh`:
 
-```bash
-# In install.sh, add after "pi install .":
-pi install git:github.com:someone/pi-big-extension
-```
+1. Append the `pi install` line to the "External extensions" section in `scripts/install.sh`
+2. Commit the change
+3. Run `./scripts/install.sh` to install
 
-Then:
+Example:
 ```bash
+# 1. Edit scripts/install.sh, add:
+pi install npm:some-extension
+
+# 2. Commit
 git add scripts/install.sh
-git commit -m "Add pi-big-extension"
-git push
+git commit -m "Add some-extension"
+
+# 3. Run the script
 ./scripts/install.sh
 ```
 
