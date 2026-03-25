@@ -28,6 +28,16 @@ pi install npm:pi-mcp-adapter
 mkdir -p ~/.pi/agent
 ln -sf "$ROOT_DIR/mcp.json" ~/.pi/agent/mcp.json
 
+# Symlink agents (for pi-subagents)
+for agent in agents/*.md; do
+  ln -sf "$ROOT_DIR/$agent" ~/.pi/agent/agents/$(basename $agent)
+done
+
+# Symlink skills (for Claude Code, Codex, OpenCode)
+for skill in skills/*/; do
+  ln -sfn "$ROOT_DIR/$skill" ~/.agents/skills/$(basename $skill)
+done
+
 cat <<EOF
 
 Pizza installed!
