@@ -57,6 +57,12 @@ git commit -m "Add some-skill"
 git push
 ```
 
+Then symlink to `~/.agents/skills/` for multi-harness support (Claude Code, Codex, OpenCode):
+```bash
+rm -rf ~/.agents/skills/some-skill
+ln -s ~/code/pizza/skills/some-skill ~/.agents/skills/some-skill
+```
+
 Changes reflect immediately after `/reload` in pi.
 
 ### Adding an Extension
@@ -102,3 +108,4 @@ Use with `/filename` in pi. Commit when done.
 - Changes to skills/extensions/prompts reflect after `/reload`
 - External big extensions go in `install.sh`, not copied into this repo
 - Skills can be modified freely - they're our copies
+- Symlink skills to `~/.agents/skills/` for multi-harness support (Claude Code, Codex, OpenCode)
