@@ -25,10 +25,15 @@ npm run setup
 ### Skills
 
 - `visual-explainer` - Generate HTML diagrams and visualizations
+- `deepwiki` - Public GitHub repository research via DeepWiki with compact handoff notes
 
 ### Extensions
 
 - `clear` - `/clear` alias for `/new`
+
+### Subagents
+
+- `deepwiki-research` - Isolated DeepWiki repo research with `explore`, `architect`, and `mixed` modes
 
 ## Adding New Stuff
 

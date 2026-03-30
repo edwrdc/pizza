@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "deepwiki": {
+      "url": "https://mcp.deepwiki.com/mcp",
+      "lifecycle": "lazy"
+    },
     "svelte": {
       "url": "https://mcp.svelte.dev/mcp",
       "lifecycle": "lazy"

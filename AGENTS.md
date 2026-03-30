@@ -16,7 +16,22 @@ cd pizza
 npm run setup
 ```
 
-This runs `pi install .` which registers pizza with pi. The repo stays wherever you cloned it - pi references it directly.
+This runs `pi install .` which registers pizza with pi and installs the external extensions listed in `scripts/install.sh`.
+The repo stays wherever you cloned it - pi references it directly.
+
+Current external extensions installed by setup include:
+- `@tintinweb/pi-subagents`
+- `pi-mcp-adapter`
+- `@howaboua/pi-codex-conversion`
+- `@ogulcancelik/pi-ghostty-theme-sync`
+
+If you want the Ghostty theme sync on a laptop without running the full setup, install it directly:
+
+```bash
+pi install npm:@ogulcancelik/pi-ghostty-theme-sync
+```
+
+Ghostty theme sync requires `ghostty` to be installed and available in `PATH`.
 
 After setup, symlink agents and skills for multi-harness support (run from pizza directory):
 ```bash
@@ -50,6 +65,20 @@ pizza/
 ```
 
 ## Workflows
+
+### DeepWiki Research
+
+This repo includes:
+
+- `skills/deepwiki/` — an on-demand skill for DeepWiki-based repo research
+- `agents/deepwiki-research.md` — a focused subagent that uses only the `mcp` tool
+- `mcp.json` entry for the `deepwiki` MCP server
+
+Preferred usage pattern:
+
+- use the `deepwiki` skill for user-facing intent detection and prompt shaping
+- use `deepwiki-research` when you want isolated DeepWiki research without polluting the parent context
+- keep output concise and in bullets; avoid tables
 
 ### Adding a Skill
 
@@ -133,6 +162,12 @@ git commit -m "Add some-extension"
 
 # 3. Run the script
 ./scripts/install.sh
+```
+
+Example currently in use:
+
+```bash
+pi install npm:@ogulcancelik/pi-ghostty-theme-sync
 ```
 
 ### Adding a Prompt
