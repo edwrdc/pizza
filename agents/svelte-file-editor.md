@@ -1,12 +1,10 @@
 ---
+name: svelte-file-editor
 description: Specialized agent for creating, editing, and reviewing Svelte files with access to documentation and autofixer
-display_name: Svelte File Editor
-tools: read, write, edit, bash, grep, find, ls
-skills: svelte-code-writer, svelte-core-bestpractices
-mcp: svelte
+tools: read, write, edit, bash, grep, find, ls, mcp:svelte
+skill: svelte-code-writer, svelte-core-bestpractices
 model: openai/gpt-5.4
 thinking: medium
-max_turns: 30
 ---
 
 <!-- Source: https://github.com/sveltejs/ai-tools -->

@@ -1,11 +1,10 @@
 ---
+name: frontend-debugger
 description: Frontend debugger using agent-browser CLI
-display_name: Frontend Debugger
 tools: read, bash, grep, find, ls
-skills: agent-browser
+skill: agent-browser
 model: zai-extra/glm-5.1
 thinking: medium
-max_turns: 50
 ---
 
 # Frontend Debugger

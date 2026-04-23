@@ -40,7 +40,9 @@ for agent in agents/*.md; do
   ln -sf "$(pwd)/$agent" ~/.pi/agent/agents/$(basename $agent)
 done
 
-# Symlink skills (for Claude Code, Codex, OpenCode)
+# Symlink skills to the STANDARD multi-harness directory
+# ~/.agents/skills/ is shared across pi, Claude Code, Codex, and OpenCode.
+# Do NOT put skills under ~/.pi/ — that is harness-specific.
 for skill in skills/*/; do
   ln -sfn "$(pwd)/$skill" ~/.agents/skills/$(basename $skill)
 done
@@ -100,11 +102,13 @@ git commit -m "Add some-skill"
 git push
 ```
 
-Then symlink to `~/.agents/skills/` for multi-harness support (Claude Code, Codex, OpenCode):
+Then symlink to the standard multi-harness directory:
 ```bash
 rm -rf ~/.agents/skills/some-skill
 ln -s "$(pwd)/skills/some-skill" ~/.agents/skills/some-skill
 ```
+
+> **Why `~/.agents/skills/`?** This path is the de-facto standard shared by pi, Claude Code, Codex, and OpenCode. Putting skills under `~/.pi/` would make them invisible to other harnesses.
 
 Changes reflect immediately after `/reload` in pi.
 
@@ -130,7 +134,7 @@ Then symlink to `~/.pi/agent/agents/`:
 ln -sf "$(pwd)/agents/auditor.md" ~/.pi/agent/agents/auditor.md
 ```
 
-Commit when done. Use in pi: `Agent({ subagent_type: "auditor", prompt: "...", description: "..." })`
+Commit when done. Use in pi: `subagent({ agent: "auditor", task: "..." })`
 
 **Note:** Model changes in agents (e.g., swapping `model: haiku` for `model: sonnet`) are minor tweaks. Don't mention them in commit messages — just lump them in with other changes.
 
@@ -187,4 +191,4 @@ Use with `/filename` in pi. Commit when done.
 - Changes to skills/extensions/prompts reflect after `/reload`
 - External big extensions go in `install.sh`, not copied into this repo
 - Skills can be modified freely - they're our copies
-- Symlink skills to `~/.agents/skills/` for multi-harness support (Claude Code, Codex, OpenCode)
+- **Skills live in `~/.agents/skills/`** — the standard multi-harness path. Never stash them under `~/.pi/`.

@@ -1,11 +1,10 @@
 ---
+name: deepwiki-research
 description: Research public repositories through DeepWiki and return concise, source-grounded notes in explore, architect, or mixed mode
-display_name: DeepWiki Research
-tools: mcp
-skills: deepwiki
+tools: mcp:deepwiki
+skill: deepwiki
 model: openai/gpt-5.4
 thinking: medium
-max_turns: 20
 ---
 
 # DeepWiki Research
