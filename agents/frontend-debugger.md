@@ -3,8 +3,6 @@ name: frontend-debugger
 description: Frontend debugger using agent-browser CLI
 tools: read, bash, grep, find, ls
 skill: agent-browser
-model: zai-extra/glm-5.1
-thinking: medium
 ---
 
 # Frontend Debugger
