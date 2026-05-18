@@ -13,40 +13,22 @@ gh repo clone edwrdc/pizza
 # See gh dl --help for other options
 
 cd pizza
-npm run setup
+./install.sh
 ```
 
-This runs `pi install .` which registers pizza with pi and installs the external extensions listed in `scripts/install.sh`.
+This runs `pi install "$ROOT_DIR"`, registers vendored local extensions, and installs external extensions listed in `install.sh`.
 The repo stays wherever you cloned it - pi references it directly.
 
+Current local extensions installed by setup include:
+- `extensions/ask-user-question` (vendored `ask_user_question` tool)
+
 Current external extensions installed by setup include:
-- `@tintinweb/pi-subagents`
+- `pi-subagents`
 - `pi-mcp-adapter`
 - `@howaboua/pi-codex-conversion`
-- `@ogulcancelik/pi-ghostty-theme-sync`
+- `pi-caveman`
 
-If you want the Ghostty theme sync on a laptop without running the full setup, install it directly:
-
-```bash
-pi install npm:@ogulcancelik/pi-ghostty-theme-sync
-```
-
-Ghostty theme sync requires `ghostty` to be installed and available in `PATH`.
-
-After setup, symlink agents and skills for multi-harness support (run from pizza directory):
-```bash
-# Symlink agents (for pi-subagents)
-for agent in agents/*.md; do
-  ln -sf "$(pwd)/$agent" ~/.pi/agent/agents/$(basename $agent)
-done
-
-# Symlink skills to the STANDARD multi-harness directory
-# ~/.agents/skills/ is shared across pi, Claude Code, Codex, and OpenCode.
-# Do NOT put skills under ~/.pi/ — that is harness-specific.
-for skill in skills/*/; do
-  ln -sfn "$(pwd)/$skill" ~/.agents/skills/$(basename $skill)
-done
-```
+Setup also symlinks custom agents into `~/.pi/agent/agents/` and skills into the standard multi-harness `~/.agents/skills/` directory.
 
 ## Prerequisites
 
@@ -58,12 +40,13 @@ done
 
 ```
 pizza/
-├── scripts/install.sh   # Setup script
+├── install.sh           # Setup script
 ├── extensions/          # Custom extensions (small ones)
 ├── skills/              # Skills (copied + modified)
 ├── agents/              # Custom subagent definitions
 ├── prompts/             # Prompt templates (currently empty)
-└── package.json         # Pi package manifest
+├── themes/              # Custom themes
+└── mcp.json             # Global MCP config
 ```
 
 ## Workflows
@@ -149,30 +132,26 @@ cp my-extension.ts ./extensions/
 
 Then commit and `/reload`.
 
-**External extensions** (npm packages, git repos) - Don't copy. Add to `scripts/install.sh`:
+**External extensions** (npm packages, git repos) - Don't copy. Add to `install.sh`:
 
-1. Append the `pi install` line to the "External extensions" section in `scripts/install.sh`
+1. Append the `pi install` line to the "External extensions" section in `install.sh`
 2. Commit the change
-3. Run `./scripts/install.sh` to install
+3. Run `./install.sh` to install
 
 Example:
 ```bash
-# 1. Edit scripts/install.sh, add:
+# 1. Edit install.sh, add:
 pi install npm:some-extension
 
 # 2. Commit
-git add scripts/install.sh
+git add install.sh
 git commit -m "Add some-extension"
 
 # 3. Run the script
-./scripts/install.sh
+./install.sh
 ```
 
-Example currently in use:
-
-```bash
-pi install npm:@ogulcancelik/pi-ghostty-theme-sync
-```
+Current external installs live in `install.sh` under `# External extensions`.
 
 ### Adding a Prompt
 

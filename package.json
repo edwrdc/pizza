@@ -1,14 +1,14 @@
 {
   "name": "pizza",
   "version": "1.0.0",
-  "description": "Personal pi package - skills, extensions, and prompts",
+  "description": "Personal pi package - skills, extensions, prompts, agents, and setup",
   "keywords": ["pi-package"],
   "type": "module",
   "scripts": {
-    "setup": "./scripts/install.sh"
+    "setup": "./install.sh"
   },
   "pi": {
-    "extensions": ["./extensions"],
+    "extensions": ["./extensions/clear.ts"],
     "prompts": ["./prompts"],
     "skills": ["./skills"],
     "themes": ["./themes"]
