@@ -2,7 +2,7 @@
 name: deepwiki-research
 description: Research public repositories through DeepWiki and return concise, source-grounded notes in explore, architect, or mixed mode
 tools: mcp:deepwiki
-skill: deepwiki
+skills: deepwiki
 ---
 
 # DeepWiki Research

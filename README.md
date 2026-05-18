@@ -1,6 +1,6 @@
 # 🍕 pizza
 
-Personal pi package with skills, extensions, and prompts I use.
+Personal pi bootstrap repo with skills, extensions, prompts, agents, and one-click setup for a new machine.
 
 ## Install
 
@@ -10,7 +10,7 @@ git clone git@github.com:edwrdc/pizza.git ~/code/pizza
 # or using GitHub CLI: gh repo clone edwrdc/pizza ~/code/pizza
 
 cd ~/code/pizza
-npm run setup
+./install.sh
 ```
 
 ## What's Inside
@@ -21,6 +21,9 @@ npm run setup
 | `skills/` | Skills (copied + modified for my use) |
 | `prompts/` | Reusable prompt templates |
 | `themes/` | Custom themes |
+| `agents/` | pi-subagents agent definitions |
+| `mcp.json` | Global MCP server config |
+| `install.sh` | New-machine bootstrap script |
 
 ### Skills
 
@@ -30,6 +33,7 @@ npm run setup
 ### Extensions
 
 - `clear` - `/clear` alias for `/new`
+- `ask-user-question` - vendored structured `ask_user_question` TUI tool
 
 ### Subagents
 
