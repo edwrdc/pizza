@@ -1,8 +1,11 @@
 ---
-name: svelte-file-editor
-description: Specialized agent for creating, editing, and reviewing Svelte files with access to documentation and autofixer
-tools: mcp:svelte/list-sections, mcp:svelte/get-documentation, mcp:svelte/svelte-autofixer, mcp:svelte/playground-link
+display_name: Svelte File Editor
+description: Specialized Svelte 5 code editor. MUST BE USED PROACTIVELY when creating, editing, or reviewing any .svelte file or .svelte.ts/.svelte.js module. Fetches relevant documentation and validates code using the Svelte MCP server tools.
+extensions: [pi-mcp-adapter]
+tools: "*, ext:pi-mcp-adapter/mcp"
 skills: svelte-code-writer, svelte-core-bestpractices
+model: opencode-go/deepseek-v4-flash
+max_turns: 0
 ---
 
 <!-- Source: https://github.com/sveltejs/ai-tools -->
