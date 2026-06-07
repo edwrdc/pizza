@@ -23,7 +23,7 @@ Current local extensions installed by setup include:
 - `extensions/ask-user-question` (vendored `ask_user_question` tool)
 
 Current external extensions installed by setup include:
-- `pi-subagents`
+- `@tintinweb/pi-subagents`
 - `pi-mcp-adapter`
 - `@howaboua/pi-codex-conversion`
 - `pi-caveman`

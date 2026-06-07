@@ -27,7 +27,7 @@ pi install "$ROOT_DIR/extensions/ask-user-question"
 
 # External extensions
 echo "==> Installing external extensions"
-pi install npm:pi-subagents
+pi install npm:@tintinweb/pi-subagents
 pi install npm:pi-mcp-adapter
 pi install npm:@howaboua/pi-codex-conversion
 pi install npm:pi-caveman
