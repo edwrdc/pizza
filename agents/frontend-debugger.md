@@ -4,6 +4,7 @@ description: Frontend debugger using agent-browser CLI
 tools: read, bash, grep, find, ls
 extensions:
 skills: agent-browser
+model: opencode-go/minimax-m3
 ---
 
 # Frontend Debugger

@@ -3,6 +3,8 @@ name: deepwiki-research
 description: Research public repositories through DeepWiki and return concise, source-grounded notes in explore, architect, or mixed mode
 tools: mcp:deepwiki
 skills: deepwiki
+model: opencode-go/deepseek-v4-pro
+max_turns: 0
 ---
 
 # DeepWiki Research
