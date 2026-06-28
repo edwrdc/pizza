@@ -4,6 +4,8 @@ This is a personal pi package containing skills, extensions, and prompts. It's d
 
 ## Install on New Machine
 
+Skills are installed separately to `~/.agents/skills/` by `install.sh` (copies, not symlinks) — not via the package’s `pi.skills` manifest, since that would double-register them against pi’s auto-discovery of `~/.agents/skills/` and cause a name-collision warning on every session.
+
 ```bash
 # Using git
 git clone git@github.com:edwrdc/pizza.git
@@ -26,7 +28,6 @@ Current external extensions installed by setup include:
 - `@tintinweb/pi-subagents`
 - `pi-mcp-adapter`
 - `@howaboua/pi-codex-conversion`
-- `pi-caveman`
 
 Setup also symlinks custom agents into `~/.pi/agent/agents/` and skills into the standard multi-harness `~/.agents/skills/` directory.
 
@@ -85,15 +86,17 @@ git commit -m "Add some-skill"
 git push
 ```
 
-Then symlink to the standard multi-harness directory:
+Then copy to the standard multi-harness directory (copies, not symlinks — tintinweb subagents reject symlinks):
+
 ```bash
 rm -rf ~/.agents/skills/some-skill
-ln -s "$(pwd)/skills/some-skill" ~/.agents/skills/some-skill
+cp -r "$(pwd)/skills/some-skill" ~/.agents/skills/some-skill
 ```
+…or just rerun `./install.sh` after editing a skill.
 
 > **Why `~/.agents/skills/`?** This path is the de-facto standard shared by pi, Claude Code, Codex, and OpenCode. Putting skills under `~/.pi/` would make them invisible to other harnesses.
 
-Changes reflect immediately after `/reload` in pi.
+Changes reflect after `/reload` in pi (or rerun `./install.sh`).
 
 ### Adding a Subagent
 

@@ -30,7 +30,6 @@ echo "==> Installing external extensions"
 pi install npm:@tintinweb/pi-subagents
 pi install npm:pi-mcp-adapter
 pi install npm:@howaboua/pi-codex-conversion
-pi install npm:pi-caveman
 
 # Symlink MCP config (pizza is source of truth for global MCP servers)
 mkdir -p ~/.pi/agent ~/.pi/agent/agents ~/.agents/skills
@@ -41,9 +40,11 @@ for agent in agents/*.md; do
   ln -sf "$ROOT_DIR/$agent" ~/.pi/agent/agents/"$(basename "$agent")"
 done
 
-# Symlink skills (for Claude Code, Codex, OpenCode)
+# Copy skills (for Claude Code, Codex, OpenCode, and tintinweb subagents which reject symlinks)
+# Re-run install.sh to pick up skill changes.
 for skill in skills/*/; do
-  ln -sfn "$ROOT_DIR/$skill" ~/.agents/skills/"$(basename "$skill")"
+  rm -rf "$HOME/.agents/skills/$(basename "$skill")"
+  cp -r "$ROOT_DIR/$skill" "$HOME/.agents/skills/$(basename "$skill")"
 done
 
 cat <<EOF
