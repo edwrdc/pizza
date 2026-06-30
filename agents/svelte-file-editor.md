@@ -4,7 +4,7 @@ description: Specialized Svelte 5 code editor. MUST BE USED PROACTIVELY when cre
 extensions: [pi-mcp-adapter]
 tools: "*, ext:pi-mcp-adapter/mcp"
 skills: svelte-code-writer, svelte-core-bestpractices
-model: opencode-go/deepseek-v4-flash
+model: openai-codex/gpt-5.5
 max_turns: 0
 ---
 
