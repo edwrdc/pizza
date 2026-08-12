@@ -1,5 +1,5 @@
-import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { BorderedLoader, DynamicBorder, getSettingsListTheme } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { BorderedLoader, CONFIG_DIR_NAME, DynamicBorder, getSettingsListTheme } from "@earendil-works/pi-coding-agent";
 import { Container, type SettingItem, SettingsList, Text } from "@earendil-works/pi-tui";
 import { cpSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, renameSync, rmSync, symlinkSync } from "node:fs";
 import { homedir } from "node:os";
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const PACKAGE_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const AGENT_DIR = resolveAgentDir();
-const SETTINGS_PATH = join(AGENT_DIR, "settings.json");
+const USER_SETTINGS_PATH = join(AGENT_DIR, "settings.json");
 const PACKAGE_SKILL_NAMES = packageSkillNames();
 
 const SUPPORT_LINKS = [
@@ -29,6 +29,7 @@ interface CatalogPackage {
 	label: string;
 	source: string;
 	description: string;
+	defaultSelected?: boolean;
 }
 
 interface PackageInstallResult {
@@ -83,6 +84,9 @@ function loadPackageCatalog(): CatalogPackage[] {
 		if (!entry || typeof entry !== "object") throw new Error(`Invalid Pizza package catalog entry ${index + 1}`);
 		const candidate = entry as Partial<CatalogPackage>;
 		if (![candidate.id, candidate.label, candidate.source, candidate.description].every((value) => typeof value === "string" && value.length > 0)) {
+			throw new Error(`Invalid Pizza package catalog entry ${index + 1}`);
+		}
+		if (candidate.defaultSelected !== undefined && typeof candidate.defaultSelected !== "boolean") {
 			throw new Error(`Invalid Pizza package catalog entry ${index + 1}`);
 		}
 		return candidate as CatalogPackage;
@@ -250,9 +254,9 @@ function installSupportLinks(): string[] {
 	return backups;
 }
 
-function readConfiguredPackageSources(): string[] {
+function readPackageSources(path: string): string[] {
 	try {
-		const settings = JSON.parse(readFileSync(SETTINGS_PATH, "utf8")) as {
+		const settings = JSON.parse(readFileSync(path, "utf8")) as {
 			packages?: Array<string | { source?: string }>;
 		};
 		return (settings.packages ?? [])
@@ -261,6 +265,12 @@ function readConfiguredPackageSources(): string[] {
 	} catch {
 		return [];
 	}
+}
+
+function readConfiguredPackageSources(ctx?: ExtensionContext): string[] {
+	const paths = [USER_SETTINGS_PATH];
+	if (ctx?.isProjectTrusted()) paths.push(join(ctx.cwd, CONFIG_DIR_NAME, "settings.json"));
+	return paths.flatMap(readPackageSources);
 }
 
 function packageIdentity(source: string): string | undefined {
@@ -301,8 +311,8 @@ function packageIdentity(source: string): string | undefined {
 	return `git:${host.toLowerCase()}/${repoPath.toLowerCase()}`;
 }
 
-function installedCatalogIds(): Set<string> {
-	const identities = new Set(readConfiguredPackageSources().map(packageIdentity).filter((value): value is string => Boolean(value)));
+function installedCatalogIds(ctx?: ExtensionContext): Set<string> {
+	const identities = new Set(readConfiguredPackageSources(ctx).map(packageIdentity).filter((value): value is string => Boolean(value)));
 	return new Set(
 		PACKAGE_CATALOG.filter((entry) => {
 			const identity = packageIdentity(entry.source);
@@ -311,14 +321,36 @@ function installedCatalogIds(): Set<string> {
 	);
 }
 
+function standaloneMultiCodexScopes(ctx?: ExtensionContext): { user: boolean; project: boolean } {
+	const standaloneIdentity = packageIdentity("git:github.com/edwrdc/pi-multi-codex");
+	if (standaloneIdentity === undefined) return { user: false, project: false };
+	const hasPackage = (path: string) => readPackageSources(path).some((source) => packageIdentity(source) === standaloneIdentity);
+	return {
+		user: hasPackage(USER_SETTINGS_PATH),
+		project: Boolean(ctx?.isProjectTrusted() && hasPackage(join(ctx.cwd, CONFIG_DIR_NAME, "settings.json"))),
+	};
+}
+
+function standaloneMultiCodexRemovalLines(ctx?: ExtensionContext): string[] {
+	const scopes = standaloneMultiCodexScopes(ctx);
+	return [
+		...(scopes.user ? ["pi remove git:github.com/edwrdc/pi-multi-codex"] : []),
+		...(scopes.project ? ["pi remove -l git:github.com/edwrdc/pi-multi-codex"] : []),
+	];
+}
+
 async function choosePackages(ctx: ExtensionCommandContext): Promise<CatalogPackage[]> {
 	if (ctx.mode !== "tui") {
 		ctx.ui.notify("/pizza packages requires TUI mode", "error");
 		return [];
 	}
 
-	const installed = installedCatalogIds();
-	const selected = new Set<string>();
+	const installed = installedCatalogIds(ctx);
+	const selected = new Set(
+		PACKAGE_CATALOG
+			.filter((entry) => entry.defaultSelected === true && !installed.has(entry.id))
+			.map((entry) => entry.id),
+	);
 
 	await ctx.ui.custom((tui, theme, _keybindings, done) => {
 		const items: SettingItem[] = PACKAGE_CATALOG.map((entry) => {
@@ -327,7 +359,7 @@ async function choosePackages(ctx: ExtensionCommandContext): Promise<CatalogPack
 				id: entry.id,
 				label: entry.label,
 				description: `${entry.description}\n${entry.source}`,
-				currentValue: isInstalled ? "installed" : "skip",
+				currentValue: isInstalled ? "installed" : selected.has(entry.id) ? "install" : "skip",
 				values: isInstalled ? undefined : ["skip", "install"],
 			};
 		});
@@ -426,12 +458,13 @@ async function runPackageSelector(pi: ExtensionAPI, ctx: ExtensionCommandContext
 	return result.changed;
 }
 
-function doctorReport(): { healthy: boolean; text: string } {
+function doctorReport(ctx: ExtensionContext): { healthy: boolean; text: string } {
 	const inspections = inspectSupport();
 	const duplicates = looseSkills();
 	const staleLinks = staleAgentLinks();
 	const problems = inspections.filter((entry) => entry.state !== "linked");
-	const installed = installedCatalogIds();
+	const installed = installedCatalogIds(ctx);
+	const standaloneRemovalLines = standaloneMultiCodexRemovalLines(ctx);
 
 	const lines = [
 		"Pizza doctor",
@@ -442,9 +475,15 @@ function doctorReport(): { healthy: boolean; text: string } {
 		"",
 		"Independent packages:",
 		...PACKAGE_CATALOG.map((entry) => `${installed.has(entry.id) ? "✓" : "·"} ${entry.label}`),
+		...(standaloneRemovalLines.length > 0
+			? ["", "! standalone Pi Multi Codex package:", ...standaloneRemovalLines.map((command) => `  remove with ${command}`)]
+			: []),
 	];
 
-	return { healthy: problems.length === 0 && duplicates.length === 0 && staleLinks.length === 0, text: lines.join("\n") };
+	return {
+		healthy: problems.length === 0 && duplicates.length === 0 && staleLinks.length === 0 && standaloneRemovalLines.length === 0,
+		text: lines.join("\n"),
+	};
 }
 
 async function setup(pi: ExtensionAPI, ctx: ExtensionCommandContext, assumeYes: boolean): Promise<void> {
@@ -519,6 +558,13 @@ async function unlinkSupport(ctx: ExtensionCommandContext, assumeYes: boolean): 
 export default function pizzaExtension(pi: ExtensionAPI) {
 	pi.on("session_start", (_event, ctx) => {
 		if (ctx.mode !== "tui") return;
+		const standaloneRemovalLines = standaloneMultiCodexRemovalLines(ctx);
+		if (standaloneRemovalLines.length > 0) {
+			ctx.ui.notify(
+				`Standalone Pi Multi Codex is also installed. Run:\n${standaloneRemovalLines.join("\n")}\nThen run /reload.`,
+				"warning",
+			);
+		}
 		if (inspectSupport().some((entry) => entry.state !== "linked") || looseSkills().length > 0 || staleAgentLinks().length > 0) {
 			ctx.ui.notify("Pizza needs setup. Run /pizza setup when ready.", "info");
 		}
@@ -540,7 +586,7 @@ export default function pizzaExtension(pi: ExtensionAPI) {
 					return;
 				}
 				case "doctor": {
-					const report = doctorReport();
+					const report = doctorReport(ctx);
 					ctx.ui.notify(report.text, report.healthy ? "info" : "warning");
 					return;
 				}

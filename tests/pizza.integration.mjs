@@ -44,8 +44,10 @@ try {
 		},
 	};
 	const ctx = {
+		cwd: root,
 		mode: "rpc",
 		hasUI: true,
+		isProjectTrusted: () => true,
 		ui: {
 			notify(message, level) {
 				notifications.push({ message, level });
@@ -89,6 +91,16 @@ try {
 		),
 		"Replacement file was not backed up",
 	);
+
+	mkdirSync(join(root, ".pi"), { recursive: true });
+	writeFileSync(join(root, ".pi", "settings.json"), JSON.stringify({
+		packages: ["git:https://github.com/edwrdc/pi-multi-codex"],
+	}));
+	notifications.length = 0;
+	await commands.get("pizza").handler("doctor", ctx);
+	assert.equal(notifications.at(-1)?.level, "warning", notifications.at(-1)?.message);
+	assert.match(notifications.at(-1)?.message ?? "", /pi remove -l git:github\.com\/edwrdc\/pi-multi-codex/);
+	rmSync(join(root, ".pi"), { recursive: true });
 
 	notifications.length = 0;
 	await commands.get("pizza").handler("doctor", ctx);

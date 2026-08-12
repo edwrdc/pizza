@@ -1,11 +1,11 @@
 # 🍕 Pizza
 
-Pizza is a private personal Pi distribution package. It keeps Pizza-owned skills and support configuration in one Git repository while leaving third-party skills and community extensions outside Pizza's ownership.
+Pizza is a personal Pi distribution package. It keeps Pizza-owned skills, extensions, and support configuration in one Git repository while leaving third-party skills and community extensions outside Pizza's ownership.
 
 ## Install
 
 ```bash
-pi install git:git@github.com:edwrdc/pizza
+pi install git:github.com/edwrdc/pizza
 ```
 
 Then start Pi and run:
@@ -52,6 +52,31 @@ The `/pizza setup` command links them from Pi's managed Git clone. Because the l
 
 Add `--yes` to `setup` or `unlink` to approve filesystem changes without a confirmation dialog.
 
+## Multi Codex
+
+Pizza includes its own Multi Codex extension under `extensions/codex-multi-account/`. It registers `openai-codex-2`, `openai-codex-3`, and `openai-codex-4` so each additional ChatGPT subscription account has a separate credential entry.
+
+```text
+/login openai-codex-2
+/codex-accounts
+/codex-switch
+/codex-usage-all
+```
+
+Codex Conversion is selected by default in the package pantry because the Multi Codex usage commands use it. It remains an independent package and can be skipped or removed separately.
+
+Multi Codex applies a narrow compatibility patch to Codex Conversion's installed `usage.js`. The patch changes two exact provider checks so they accept numbered OpenAI Codex providers. It stops without writing if the expected source has changed. Run `/codex-usage-unpatch` to restore the original checks for the current checkout. Disable the Multi Codex extension through `pi config` before reloading or restarting Pi if the patch must remain disabled.
+
+If the older standalone Multi Codex package is installed, Pizza reports the duplicate. Remove it manually and reload Pi:
+
+```bash
+pi remove git:github.com/edwrdc/pi-multi-codex
+```
+
+```text
+/reload
+```
+
 Pizza never removes community packages. Manage packages after installation with Pi itself:
 
 ```bash
@@ -66,13 +91,13 @@ Before removing Pizza itself, unlink its support files while the `/pizza` comman
 /pizza unlink
 ```
 
-Then run `pi remove git:git@github.com:edwrdc/pizza`. If Pizza was already removed, inspect the active Pi agent directory (`$PI_CODING_AGENT_DIR` or `~/.pi/agent`). Remove only dangling symlinks under `agents/` whose targets point into Pizza's package, plus the `mcp.json` symlink if it points into Pizza. Do not delete regular files.
+Then run `pi remove git:github.com/edwrdc/pizza`. If Pizza was already removed, inspect the active Pi agent directory (`$PI_CODING_AGENT_DIR` or `~/.pi/agent`). Remove only dangling symlinks under `agents/` whose targets point into Pizza's package, plus the `mcp.json` symlink if it points into Pizza. Do not delete regular files.
 
 ## Community package catalog
 
 The pantry entries live in [`catalog/community-packages.json`](catalog/community-packages.json). They are installation suggestions, not vendored dependencies and not resources owned by Pizza.
 
-Current suggestions include Pi Subagents, Pi MCP Adapter, Context7, Synthetic, FFF, Codex Conversion, and Pi Multi Codex.
+Current suggestions include Pi Subagents, Pi MCP Adapter, Context7, Synthetic, FFF, and Codex Conversion.
 
 ## Authoring flow
 
