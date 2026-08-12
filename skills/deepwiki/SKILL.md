@@ -9,7 +9,7 @@ Use this skill when the user wants repository-grounded answers for a **public Gi
 
 This skill is designed to keep the main agent context lean:
 
-- prefer the `deepwiki-research` project subagent when available
+- prefer the global `deepwiki-research` subagent when available
 - otherwise use the `mcp` tool with the `deepwiki` server directly
 - return only a compact summary to the main conversation
 - avoid dumping long raw DeepWiki output into the parent context
@@ -50,14 +50,15 @@ Examples:
 
 ## Preferred execution order
 
-### Option A: Use the `deepwiki-research` project subagent
+### Option A: Use the global `deepwiki-research` subagent
 
-If the `deepwiki-research` project subagent is available, prefer this path first.
+If the `deepwiki-research` subagent is available, prefer this path first.
 
 Use the `subagent` tool with:
 
 - `agent: "deepwiki-research"`
-- `agentScope: "project"`
+- a unique lower-kebab `name`, such as `repo-deepwiki`
+- a short human-readable `title`, such as `Repository architecture research`
 - a task that clearly includes:
   - the selected mode
   - the repository in `owner/repo` format
@@ -80,11 +81,12 @@ Important:
 
 - `deepwiki-research` is a **subagent name**
 - it is **not** an MCP tool name
+- do not pass `agentScope`; the agent is installed globally
 - if a repo is provided as `https://github.com/owner/repo`, normalize it to `owner/repo`
 
 ### Option B: Fallback to MCP directly
 
-If the project subagent is unavailable, use the `mcp` tool against the `deepwiki` server.
+If the subagent is unavailable, use the `mcp` tool against the `deepwiki` server.
 
 Recommended sequence:
 
@@ -154,4 +156,3 @@ Infer the repository and question from the user's request.
 If the repository is missing or ambiguous, ask a clarifying question before continuing.
 
 If the user already provided a repo and a clear question, do not ask for confirmation.
-
