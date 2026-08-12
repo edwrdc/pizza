@@ -1,11 +1,11 @@
 # Pizza — Personal Pi Distribution
 
-Pizza is installed globally as one private Git-backed Pi package. The repository is the source of truth for personal Pi skills, the Pizza setup extension, agent definitions, MCP configuration, and the optional community-package catalog.
+Pizza is installed globally as one public Git-backed Pi package. The repository is the source of truth for personal Pi skills, Pizza extensions, agent definitions, MCP configuration, and the optional community-package catalog.
 
 ## Installation model
 
 ```bash
-pi install git:git@github.com:edwrdc/pizza
+pi install git:github.com/edwrdc/pizza
 pi update --extensions
 ```
 
@@ -16,11 +16,14 @@ The checkout under `Projects/pizza` is the authoring clone. Do not register it w
 Pizza owns:
 
 - `extensions/pizza.ts`
+- `extensions/codex-multi-account/`
 - personal package skills under `skills/`
 - support files under `agents/` and `mcp.json`
 - the installation catalog in `catalog/community-packages.json`
 
 Community packages remain independent Pi package sources. Pizza may offer to install them but must not vendor, update, disable, or remove them itself.
+
+The Multi Codex extension has one explicit compatibility exception: it may patch the two exact OpenAI Codex provider checks in the installed Codex Conversion `usage.js` file. The patch must remain anchor-validated, reversible through `/codex-usage-unpatch`, limited to usage support, and fail without writing when the expected source shape changes. This exception does not transfer ownership of Codex Conversion to Pizza.
 
 Third-party skills are also outside Pizza's ownership. Pizza records them in `SKILLS.md` for personal reference only and must not install, update, remove, migrate, or vendor them.
 
@@ -42,7 +45,7 @@ Pi packages do not natively register agents or MCP configuration. `/pizza setup`
 
 ## Package pantry
 
-Maintain third-party suggestions in `catalog/community-packages.json`, not in TypeScript. Every entry requires a stable id, display label, valid Pi package source, and concise description.
+Maintain third-party suggestions in `catalog/community-packages.json`, not in TypeScript. Every entry requires a stable id, display label, valid Pi package source, and concise description. Set `defaultSelected` only when Pizza has a documented integration that depends on or recommends the package.
 
 The pantry is install-only. Package removal and updating remain Pi responsibilities.
 
@@ -50,7 +53,8 @@ The pantry is install-only. Package removal and updating remain Pi responsibilit
 
 - Personal skill: read `SKILLS.md`, add a standard `<name>/SKILL.md` directory under `skills/`, and update the owned-skills section in `SKILLS.md`.
 - Third-party skill reference: update `SKILLS.md` only. Do not add installer behavior to Pizza.
-- Pizza behavior: update `extensions/pizza.ts`.
+- Pizza setup behavior: update `extensions/pizza.ts`.
+- Multi Codex behavior: update `extensions/codex-multi-account/`.
 - Agent definition: add a top-level `.md` file under `agents/`; Pizza setup discovers direct `agents/*.md` entries.
 - MCP server: update `mcp.json`.
 - Community suggestion: update `catalog/community-packages.json`.

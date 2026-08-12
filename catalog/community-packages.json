@@ -33,12 +33,7 @@
     "id": "codex-conversion",
     "label": "Codex Conversion",
     "source": "npm:@howaboua/pi-codex-conversion",
-    "description": "Codex-oriented prompt and tool compatibility helpers."
-  },
-  {
-    "id": "multi-codex",
-    "label": "Pi Multi Codex",
-    "source": "git:github.com/edwrdc/pi-multi-codex",
-    "description": "Personal multi-Codex workflow package maintained separately from Pizza."
+    "description": "Codex-oriented prompt and tool compatibility helpers. Recommended for Pizza's Multi Codex usage commands.",
+    "defaultSelected": true
   }
 ]
