@@ -30,6 +30,18 @@
     "description": "Fast fuzzy file finding and content search tools."
   },
   {
+    "id": "ponytail",
+    "label": "Ponytail",
+    "source": "git:github.com/DietrichGebert/ponytail",
+    "description": "Minimal-code modes and review commands that favor reuse, standard-library, and native-platform solutions."
+  },
+  {
+    "id": "pi-caveman",
+    "label": "Pi Caveman",
+    "source": "git:github.com/jonjonrankin/pi-caveman",
+    "description": "Configurable terse-response modes that reduce output-token usage while preserving technical substance."
+  },
+  {
     "id": "codex-conversion",
     "label": "Codex Conversion",
     "source": "npm:@howaboua/pi-codex-conversion",

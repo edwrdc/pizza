@@ -97,7 +97,7 @@ Then run `pi remove git:github.com/edwrdc/pizza`. If Pizza was already removed, 
 
 The pantry entries live in [`catalog/community-packages.json`](catalog/community-packages.json). They are installation suggestions, not vendored dependencies and not resources owned by Pizza.
 
-Current suggestions include Pi Subagents, Pi MCP Adapter, Context7, Synthetic, FFF, and Codex Conversion.
+Current suggestions include Pi Subagents, Pi MCP Adapter, Context7, Synthetic, FFF, Ponytail, Pi Caveman, and Codex Conversion.
 
 ## Authoring flow
 
