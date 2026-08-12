@@ -1,18 +1,12 @@
 {
   "mcpServers": {
-    "deepwiki": {
-      "url": "https://mcp.deepwiki.com/mcp",
-      "lifecycle": "lazy"
-    },
     "svelte": {
       "url": "https://mcp.svelte.dev/mcp",
       "lifecycle": "lazy"
     },
-    "jina": {
-      "url": "https://mcp.jina.ai/v1",
-      "headers": {
-        "Authorization": "Bearer ${JINA_AI_API_KEY}"
-      }
+    "deepwiki": {
+      "url": "https://mcp.deepwiki.com/mcp",
+      "lifecycle": "lazy"
     }
   }
 }

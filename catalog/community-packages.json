@@ -1,0 +1,44 @@
+[
+  {
+    "id": "pi-subagents",
+    "label": "Pi Subagents",
+    "source": "git:github.com/edxeth/pi-subagents",
+    "description": "Named background and interactive agents, including Pizza's packaged agent definitions."
+  },
+  {
+    "id": "pi-mcp-adapter",
+    "label": "Pi MCP Adapter",
+    "source": "npm:pi-mcp-adapter",
+    "description": "MCP proxy and direct-tool support. Uses the MCP configuration linked by Pizza setup."
+  },
+  {
+    "id": "context7",
+    "label": "Context7 Docs",
+    "source": "npm:@upstash/context7-pi",
+    "description": "Current library documentation and code examples through Context7."
+  },
+  {
+    "id": "synthetic",
+    "label": "Synthetic",
+    "source": "git:github.com/aliou/pi-synthetic",
+    "description": "Web search and Synthetic provider integrations."
+  },
+  {
+    "id": "fff",
+    "label": "FFF",
+    "source": "npm:@ff-labs/pi-fff",
+    "description": "Fast fuzzy file finding and content search tools."
+  },
+  {
+    "id": "codex-conversion",
+    "label": "Codex Conversion",
+    "source": "npm:@howaboua/pi-codex-conversion",
+    "description": "Codex-oriented prompt and tool compatibility helpers."
+  },
+  {
+    "id": "multi-codex",
+    "label": "Pi Multi Codex",
+    "source": "git:github.com/edwrdc/pi-multi-codex",
+    "description": "Personal multi-Codex workflow package maintained separately from Pizza."
+  }
+]
