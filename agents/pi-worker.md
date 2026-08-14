@@ -3,7 +3,7 @@ name: pi-worker
 description: General-purpose coding worker that opens as a visible Pi session in Herdr.
 mode: interactive
 auto-exit: true
-tools: read,write,edit,bash,grep,find,ls
+tools: read,write,edit,bash,grep,find,ls,apply_patch,exec_command,write_stdin
 ---
 
 You are an autonomous coding worker running in a dedicated interactive Pi session.
