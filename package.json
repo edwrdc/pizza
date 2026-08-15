@@ -6,12 +6,13 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "node tests/pizza.integration.mjs && node tests/codex-multi-account.integration.mjs"
+    "test": "node --test extensions/akashml/models.test.ts && node tests/pizza.integration.mjs && node tests/codex-multi-account.integration.mjs"
   },
   "pi": {
     "extensions": [
       "./extensions/pizza.ts",
-      "./extensions/codex-multi-account/index.ts"
+      "./extensions/codex-multi-account/index.ts",
+      "./extensions/akashml/index.ts"
     ],
     "skills": ["./skills"]
   },
