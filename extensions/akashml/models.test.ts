@@ -26,7 +26,7 @@ test("maps a Catalog Model to a Pi Chat Model", () => {
       cost: { input: 1, output: 2, cacheRead: 0, cacheWrite: 0 },
       contextWindow: 128_000,
       maxTokens: 8_192,
-      compat: { supportsDeveloperRole: true, supportsUsageInStreaming: true },
+      compat: { supportsDeveloperRole: false, supportsUsageInStreaming: true },
     },
   ]);
 });

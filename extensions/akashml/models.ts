@@ -50,7 +50,8 @@ function parseModel(item: unknown): Model<"openai-completions"> | undefined {
     },
     contextWindow: context_length,
     maxTokens: max_output_length,
-    compat: { supportsDeveloperRole: true, supportsUsageInStreaming: true },
+    // ponytail: no developer role — AkashML upstream rejects it ("Unexpected message role")
+    compat: { supportsDeveloperRole: false, supportsUsageInStreaming: true },
   };
 }
 
