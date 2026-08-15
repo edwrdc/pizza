@@ -2,16 +2,9 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
-const CODEX_CONVERSION_USAGE_PATH = join(
-	"npm",
-	"node_modules",
-	"@howaboua",
-	"pi-codex-conversion",
-	"dist",
-	"ui",
-	"settings",
-	"usage.js",
-);
+const CODEX_CONVERSION_PKG_PATH = join("npm", "node_modules", "@howaboua", "pi-codex-conversion");
+// v3 moved usage out of dist/ui/settings/usage.js into codex-usage/{client,format}.js
+const CODEX_CONVERSION_USAGE_PATH = join(CODEX_CONVERSION_PKG_PATH, "dist", "codex-usage", "client.js");
 const PATCH_ANCHOR = 'if (model.provider !== "openai-codex") {';
 const PATCH_REPLACEMENT = 'if (!/^openai-codex(-\\d+)?$/.test(model.provider)) {';
 
@@ -33,7 +26,7 @@ function agentDir(): string {
 function packagePaths(root: string): CodexConversionPaths {
 	return {
 		filePath: join(root, CODEX_CONVERSION_USAGE_PATH),
-		packagePath: join(root, "npm", "node_modules", "@howaboua", "pi-codex-conversion", "package.json"),
+		packagePath: join(root, CODEX_CONVERSION_PKG_PATH, "package.json"),
 	};
 }
 
@@ -87,7 +80,7 @@ export function unpatchUsage(cwd?: string, projectConfigDir = ".pi"): { ok: bool
 		return { ok: false, message: "Codex Conversion is not installed (usage.js was not found)." };
 	}
 	if (inspection.kind === "pristine") {
-		return { ok: true, message: "Codex Conversion usage.js is not patched." };
+		return { ok: true, message: "Codex Conversion usage checks are not patched." };
 	}
 	if (inspection.kind === "drifted") {
 		return { ok: false, message: `Unexpected patch state. Inspect ${filePath} manually.` };

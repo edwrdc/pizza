@@ -4,6 +4,7 @@ import { createProvider, lazyOAuth, type Model, type OAuthAuth } from "@earendil
 import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
 import { pathToFileURL } from "node:url";
 import { codexConversionPaths, ensureUsagePatched, unpatchAllUsage } from "./usage-patch.ts";
+import { dirname, join } from "node:path";
 
 const BASE_PROVIDER = "openai-codex";
 const MAX_ACCOUNTS = 4;
@@ -209,7 +210,11 @@ async function accountReport(ctx: ExtensionContext): Promise<string> {
 async function loadUsageModule(ctx: ExtensionContext): Promise<CodexUsageModule | undefined> {
 	const { filePath } = codexConversionPaths(ctx.isProjectTrusted() ? ctx.cwd : undefined, CONFIG_DIR_NAME);
 	try {
-		return await import(pathToFileURL(filePath).href) as CodexUsageModule;
+		const [client, format] = await Promise.all([
+			import(pathToFileURL(filePath).href) as Promise<Pick<CodexUsageModule, "fetchCodexUsage">>,
+			import(pathToFileURL(join(dirname(filePath), "format.js")).href) as Promise<Pick<CodexUsageModule, "formatCodexUsage">>,
+		]);
+		return { ...client, ...format };
 	} catch {
 		return undefined;
 	}

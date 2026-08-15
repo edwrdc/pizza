@@ -8,12 +8,12 @@ const projectRoot = resolve(import.meta.dirname, "..");
 const root = mkdtempSync(join(tmpdir(), "pizza-multi-codex-"));
 const agentDir = join(root, "agent");
 const packageDir = join(agentDir, "npm", "node_modules", "@howaboua", "pi-codex-conversion");
-const usagePath = join(packageDir, "dist", "ui", "settings", "usage.js");
+const usagePath = join(packageDir, "dist", "codex-usage", "client.js");
 const anchor = 'if (model.provider !== "openai-codex") {';
 const originalUsage = `export function fetchUsage(model) {\n${anchor}\n  throw new Error("unsupported");\n}\n${anchor}\n  throw new Error("unsupported");\n}\n`;
 
 try {
-	mkdirSync(join(packageDir, "dist", "ui", "settings"), { recursive: true });
+	mkdirSync(join(packageDir, "dist", "codex-usage"), { recursive: true });
 	writeFileSync(join(packageDir, "package.json"), JSON.stringify({ version: "3.0.13" }));
 	writeFileSync(usagePath, originalUsage);
 	process.env.PI_CODING_AGENT_DIR = agentDir;
@@ -76,8 +76,8 @@ try {
 
 	const projectCwd = join(root, "project");
 	const projectPackageDir = join(projectCwd, ".pi", "npm", "node_modules", "@howaboua", "pi-codex-conversion");
-	const projectUsagePath = join(projectPackageDir, "dist", "ui", "settings", "usage.js");
-	mkdirSync(join(projectPackageDir, "dist", "ui", "settings"), { recursive: true });
+	const projectUsagePath = join(projectPackageDir, "dist", "codex-usage", "client.js");
+	mkdirSync(join(projectPackageDir, "dist", "codex-usage"), { recursive: true });
 	writeFileSync(join(projectPackageDir, "package.json"), JSON.stringify({ version: "project" }));
 	writeFileSync(projectUsagePath, originalUsage);
 	assert.equal(codexConversionPaths(projectCwd).filePath, projectUsagePath);
@@ -115,7 +115,7 @@ try {
 	assert.equal(readFileSync(projectUsagePath, "utf8"), originalUsage, "Project-only patch was not restored");
 
 	assert.equal(ensureUsagePatched().kind, "absent");
-	assert(existsSync(usagePath), "Absent-package check modified usage.js");
+	assert(existsSync(usagePath), "Absent-package check modified client.js");
 } finally {
 	rmSync(root, { recursive: true, force: true });
 }
