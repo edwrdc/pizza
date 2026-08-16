@@ -1,9 +1,9 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { CONFIG_DIR_NAME } from "@earendil-works/pi-coding-agent";
+import { CONFIG_DIR_NAME, getAgentDir } from "@earendil-works/pi-coding-agent";
 import { createProvider, lazyOAuth, type Model, type OAuthAuth } from "@earendil-works/pi-ai";
 import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
 import { pathToFileURL } from "node:url";
-import { codexConversionPaths, ensureUsagePatched, unpatchAllUsage } from "./usage-patch.ts";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const BASE_PROVIDER = "openai-codex";
@@ -70,29 +70,6 @@ export default function codexMultiAccountExtension(pi: ExtensionAPI) {
 		stream: baseCodex.stream.bind(baseCodex),
 		streamSimple: baseCodex.streamSimple.bind(baseCodex),
 	};
-	const userPatchState = ensureUsagePatched();
-
-	pi.on("session_start", (_event, ctx) => {
-		const patchState = ctx.isProjectTrusted()
-			? ensureUsagePatched(ctx.cwd, CONFIG_DIR_NAME)
-			: userPatchState;
-		const patchMessage = patchState.kind === "patched"
-			? patchState.already
-				? `Multi Codex usage patch is active for Codex Conversion v${patchState.version}.`
-				: `Patched Codex Conversion v${patchState.version} usage checks for additional accounts. Restart Pi if Codex Conversion loaded before Pizza.`
-			: patchState.kind === "drifted"
-				? `Codex Conversion v${patchState.version} no longer matches the Multi Codex usage patch. Clone usage through /codex is unavailable.`
-				: undefined;
-		if (patchMessage) ctx.ui.notify(patchMessage, patchState.kind === "drifted" ? "error" : "info");
-	});
-
-	pi.registerCommand("codex-usage-unpatch", {
-		description: "Restore Codex Conversion's original usage provider checks",
-		handler: async (_args, ctx) => {
-			const result = unpatchAllUsage(ctx.isProjectTrusted() ? ctx.cwd : undefined, CONFIG_DIR_NAME);
-			ctx.ui.notify(result.message, result.ok ? "info" : "error");
-		},
-	});
 
 	for (const id of ACCOUNT_PROVIDERS) {
 		const accountNumber = id.slice(BASE_PROVIDER.length + 1);
@@ -207,8 +184,18 @@ async function accountReport(ctx: ExtensionContext): Promise<string> {
 	return lines.join("\n");
 }
 
+const USAGE_PKG_REL = join("npm", "node_modules", "@howaboua", "pi-codex-conversion", "dist", "codex-usage", "client.js");
+
+function codexConversionUsagePath(cwd?: string): string {
+	if (cwd) {
+		const projectPkg = join(cwd, CONFIG_DIR_NAME, USAGE_PKG_REL);
+		if (existsSync(projectPkg)) return projectPkg;
+	}
+	return join(getAgentDir(), USAGE_PKG_REL);
+}
+
 async function loadUsageModule(ctx: ExtensionContext): Promise<CodexUsageModule | undefined> {
-	const { filePath } = codexConversionPaths(ctx.isProjectTrusted() ? ctx.cwd : undefined, CONFIG_DIR_NAME);
+	const filePath = codexConversionUsagePath(ctx.isProjectTrusted() ? ctx.cwd : undefined);
 	try {
 		const [client, format] = await Promise.all([
 			import(pathToFileURL(filePath).href) as Promise<Pick<CodexUsageModule, "fetchCodexUsage">>,

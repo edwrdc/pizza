@@ -23,7 +23,7 @@ Pizza owns:
 
 Community packages remain independent Pi package sources. Pizza may offer to install them but must not vendor, update, disable, or remove them itself.
 
-The Multi Codex extension has one explicit compatibility exception: it may patch the two exact OpenAI Codex provider checks in the installed Codex Conversion `usage.js` file. The patch must remain anchor-validated, reversible through `/codex-usage-unpatch`, limited to usage support, and fail without writing when the expected source shape changes. This exception does not transfer ownership of Codex Conversion to Pizza.
+Pizza treats Codex Conversion as an independent package. Multi Codex loads its usage client read-only; Codex Conversion 3.0.15+ validates subscription models by API and base URL, so numbered clone providers work without any patching.
 
 Third-party skills are also outside Pizza's ownership. Pizza records them in `SKILLS.md` for personal reference only and must not install, update, remove, migrate, or vendor them.
 

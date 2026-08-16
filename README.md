@@ -65,7 +65,7 @@ Pizza includes its own Multi Codex extension under `extensions/codex-multi-accou
 
 Codex Conversion is selected by default in the package pantry because the Multi Codex usage commands use it. It remains an independent package and can be skipped or removed separately.
 
-Multi Codex applies a narrow compatibility patch to Codex Conversion's installed `usage.js`. The patch changes two exact provider checks so they accept numbered OpenAI Codex providers. It stops without writing if the expected source has changed. Run `/codex-usage-unpatch` to restore the original checks for the current checkout. Disable the Multi Codex extension through `pi config` before reloading or restarting Pi if the patch must remain disabled.
+Multi Codex loads Codex Conversion's usage client read-only. Codex Conversion 3.0.15+ validates subscription models by API and base URL (not provider id), so numbered OpenAI Codex clone providers work without any patching. Earlier Codex Conversion versions required a `/codex-usage-unpatch`-managed file patch; that machinery is gone.
 
 If the older standalone Multi Codex package is installed, Pizza reports the duplicate. Remove it manually and reload Pi:
 
