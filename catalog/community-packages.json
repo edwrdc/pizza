@@ -42,6 +42,12 @@
     "description": "Configurable terse-response modes that reduce output-token usage while preserving technical substance."
   },
   {
+    "id": "pstack-pi",
+    "label": "Pstack Pi",
+    "source": "npm:@0xrsydn/pstack-pi",
+    "description": "Pi port of Cursor's pstack: swarm orchestration skills (poteto-mode, arena, interrogate, how, why, and more) plus general-purpose and comment-sicko agents. Bundled subagent extension may shadow pi-subagents; skills still work without it."
+  },
+  {
     "id": "codex-conversion",
     "label": "Codex Conversion",
     "source": "npm:@howaboua/pi-codex-conversion",
