@@ -42,6 +42,12 @@
     "description": "Configurable terse-response modes that reduce output-token usage while preserving technical substance."
   },
   {
+    "id": "pi-pstack",
+    "label": "Pi Pstack",
+    "source": "git:github.com/edwrdc/pi-pstack",
+    "description": "Pstack workflows adapted to reuse pi-subagents, with private role-based model routing and safe fallback handling."
+  },
+  {
     "id": "codex-conversion",
     "label": "Codex Conversion",
     "source": "npm:@howaboua/pi-codex-conversion",
