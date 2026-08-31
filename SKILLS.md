@@ -35,6 +35,17 @@ Stress-tests plans and decisions with a design-tree interview.
   npx skills@latest add mattpocock/skills --skill grilling --agent pi --global --yes
   ```
 
+### `gh-stack`
+
+Provides GitHub stacked PR workflow guidance.
+
+- Upstream: <https://github.com/github/gh-stack/tree/main/skills/gh-stack>
+- Reference command:
+
+  ```bash
+  npx skills@latest add github/gh-stack --skill gh-stack --agent pi --global --yes
+  ```
+
 ### `impeccable`
 
 Provides frontend design guidance and interface review tools.
