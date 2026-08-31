@@ -25,7 +25,7 @@ try {
 	writeFileSync(join(sharedSkills, "grilling", "marker"), "external skill");
 	writeFileSync(join(agentDir, "mcp.json"), readFileSync(join(projectRoot, "mcp.json")));
 	symlinkSync(join(projectRoot, "agents", "retired-agent.md"), join(agentDir, "agents", "retired-agent.md"));
-	symlinkSync(join(projectRoot, "agents", "pi-worker.md"), join(agentDir, "agents", "my-worker-alias.md"));
+	symlinkSync(join(projectRoot, "agents", "general-purpose.md"), join(agentDir, "agents", "my-worker-alias.md"));
 
 	process.env.HOME = join(root, "home");
 	process.env.PI_CODING_AGENT_DIR = agentDir;
@@ -76,7 +76,7 @@ try {
 	};
 	await commands.get("pizza").handler("setup", ctx);
 
-	for (const name of ["deepwiki-research.md", "pi-worker.md", "svelte-file-editor.md"]) {
+	for (const name of ["deepwiki-research.md", "general-purpose.md", "svelte-file-editor.md"]) {
 		const path = join(agentDir, "agents", name);
 		assert(existsSync(path) && lstatSync(path).isSymbolicLink(), `Missing discovered agent link: ${name}`);
 	}
@@ -115,7 +115,7 @@ try {
 	};
 	await commands.get("pizza").handler("unlink", ctx);
 	assert.equal(readFileSync(join(agentDir, "mcp.json"), "utf8"), "user replacement");
-	for (const name of ["deepwiki-research.md", "pi-worker.md", "svelte-file-editor.md"]) {
+	for (const name of ["deepwiki-research.md", "general-purpose.md", "svelte-file-editor.md"]) {
 		assert(!existsSync(join(agentDir, "agents", name)), `Owned agent link survived unlink: ${name}`);
 	}
 	assert(lstatSync(join(agentDir, "agents", "my-worker-alias.md")).isSymbolicLink(), "User-created alias was removed by unlink");
