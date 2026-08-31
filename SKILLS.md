@@ -46,19 +46,6 @@ Provides GitHub stacked PR workflow guidance.
   npx skills@latest add github/gh-stack --skill gh-stack --agent pi --global --yes
   ```
 
-### `pstack-pi` (package)
-
-Pi port of Cursor's [pstack](https://github.com/cursor/plugins/tree/main/pstack) plugin: 44 swarm/orchestration skills (`poteto-mode`, `swarm`, `arena`, `interrogate`, `how`, `why`, and more) plus `general-purpose` and `comment-sicko` agent definitions.
-
-- Upstream: <https://github.com/0xrsydn/pstack-pi>
-- Reference command:
-
-  ```bash
-  pi install npm:@0xrsydn/pstack-pi
-  ```
-
-Pizza already ships its own `agents/general-purpose.md` and `agents/comment-sicko.md` ports; the package's bundled copies are redundant but harmless (user-dir agents take precedence). Its `subagent` extension may collide with pi-subagents; disabling the package's extension keeps its skills working.
-
 ### `impeccable`
 
 Provides frontend design guidance and interface review tools.
