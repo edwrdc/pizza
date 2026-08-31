@@ -22,7 +22,7 @@ Source: [`skills/deepwiki/`](skills/deepwiki/)
 
 ## Third-party skill references
 
-These skills may be installed independently in the user's global Agent Skills directory. Their presence is not required or managed by Pizza.
+These skills may be installed independently as loose global skills or through separate Pi packages. Their presence is not required or managed by Pizza.
 
 ### `grilling`
 
@@ -56,6 +56,31 @@ Provides frontend design guidance and interface review tools.
   ```bash
   npx skills@latest add pbakaus/impeccable --skill impeccable --agent pi --global --yes
   ```
+
+### `show-me`
+
+Provides image and screenshot display workflow guidance.
+
+- Upstream: <https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md>
+- Reference command:
+
+  ```bash
+  npx skills@latest add humanlayer/skills --skill show-me --agent pi --global --yes
+  ```
+
+### `pi-pstack` (package)
+
+Provides pstack orchestration workflows adapted to reuse pi-subagents, including private role-based model routing and ordered fallback handling.
+
+- Upstream: <https://github.com/edwrdc/pi-pstack>
+- Derived from: <https://github.com/kkgogogo17/pi-pstack> and Cursor's <https://github.com/cursor/plugins/tree/main/pstack>
+- Reference command:
+
+  ```bash
+  pi install git:github.com/edwrdc/pi-pstack
+  ```
+
+After installation, run `/pstack setup` and `/reload` to expose its bundled agent definitions.
 
 ### `svelte-code-writer`
 
