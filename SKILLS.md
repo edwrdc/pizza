@@ -32,7 +32,7 @@ Stress-tests plans and decisions with a design-tree interview.
 - Reference command:
 
   ```bash
-  npx skills@latest add mattpocock/skills --skill grilling --agent pi --global --yes
+  pnx skills@latest add mattpocock/skills --skill grilling --agent pi --global --yes
   ```
 
 ### `gh-stack`
@@ -43,7 +43,7 @@ Provides GitHub stacked PR workflow guidance.
 - Reference command:
 
   ```bash
-  npx skills@latest add github/gh-stack --skill gh-stack --agent pi --global --yes
+  pnx skills@latest add github/gh-stack --skill gh-stack --agent pi --global --yes
   ```
 
 ### `impeccable`
@@ -54,7 +54,7 @@ Provides frontend design guidance and interface review tools.
 - Reference command:
 
   ```bash
-  npx skills@latest add pbakaus/impeccable --skill impeccable --agent pi --global --yes
+  pnx skills@latest add pbakaus/impeccable --skill impeccable --agent pi --global --yes
   ```
 
 ### `show-me`
@@ -65,7 +65,7 @@ Provides image and screenshot display workflow guidance.
 - Reference command:
 
   ```bash
-  npx skills@latest add humanlayer/skills --skill show-me --agent pi --global --yes
+  pnx skills@latest add humanlayer/skills --skill show-me --agent pi --global --yes
   ```
 
 ### `pi-pstack` (package)
@@ -90,7 +90,7 @@ Provides Svelte documentation lookup and code-analysis instructions.
 - Reference command:
 
   ```bash
-  npx skills@latest add sveltejs/ai-tools --skill svelte-code-writer --agent pi --global --yes
+  pnx skills@latest add sveltejs/ai-tools --skill svelte-code-writer --agent pi --global --yes
   ```
 
 ### `svelte-core-bestpractices`
@@ -101,7 +101,7 @@ Provides guidance for writing modern Svelte components and modules.
 - Reference command:
 
   ```bash
-  npx skills@latest add sveltejs/ai-tools --skill svelte-core-bestpractices --agent pi --global --yes
+  pnx skills@latest add sveltejs/ai-tools --skill svelte-core-bestpractices --agent pi --global --yes
   ```
 
 ## Adding or changing skills

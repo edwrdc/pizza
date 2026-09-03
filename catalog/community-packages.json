@@ -53,5 +53,17 @@
     "source": "npm:@howaboua/pi-codex-conversion",
     "description": "Codex-oriented prompt and tool compatibility helpers. Recommended for Pizza's Multi Codex usage commands.",
     "defaultSelected": true
+  },
+  {
+    "id": "pi-codex-web-run",
+    "label": "Codex Web Run",
+    "source": "npm:@howaboua/pi-codex-web-run",
+    "description": "Codex web search and navigation for Pi, Code Mode and Notebook Mode. Replaces the web search removed from Codex Conversion's bundled toolkit."
+  },
+  {
+    "id": "pi-codex-imagegen",
+    "label": "Codex Imagegen",
+    "source": "npm:@howaboua/pi-codex-imagegen",
+    "description": "Codex image generation and editing for Pi, Code Mode and Notebook Mode. Replaces the image generation removed from Codex Conversion's bundled toolkit."
   }
 ]
