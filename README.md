@@ -41,6 +41,19 @@ Pizza ships the definitions under `agents/*.md` and `mcp.json` even though Pi's 
 
 The `/pizza setup` command links them from Pi's managed Git clone. Because the links target the managed clone, package updates update their contents without recopying them.
 
+### Exploration routing prompt
+
+[`APPEND_SYSTEM.md`](APPEND_SYSTEM.md) teaches the main agent when to inspect code directly, launch one scout, or split an investigation across several scouts. Each interactive scout opens in its own Herdr pane when Pi runs inside Herdr.
+
+Pizza does not manage this prompt link yet. Create it manually after installation:
+
+```bash
+ln -s "$HOME/.pi/agent/git/github.com/edwrdc/pizza/APPEND_SYSTEM.md" \
+  "${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}/APPEND_SYSTEM.md"
+```
+
+Run `/reload` afterward. Pi uses a trusted project's `.pi/APPEND_SYSTEM.md` instead of the global file when both exist. Remove the global link manually if you no longer want the routing policy.
+
 ## Pizza commands
 
 ```text
