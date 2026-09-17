@@ -4,7 +4,7 @@ description: Bounded read-only repository exploration. Use to locate anchors in 
 mode: interactive
 auto-exit: true
 model: opencode-go/deepseek-v4.1-flash
-tools: read,grep,find,ls,ffgrep,fffind
+tools: read,grep,find,ls,ffgrep,fffind,todo
 skills: none
 session-mode: lineage-only
 timeout: 600

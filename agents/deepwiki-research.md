@@ -3,7 +3,7 @@ name: deepwiki-research
 description: Research public repositories through DeepWiki and return concise, source-grounded notes in explore, architect, or mixed mode.
 mode: background
 auto-exit: true
-tools: mcp:deepwiki
+tools: mcp
 model: opencode-go/deepseek-v4-pro
 ---
 

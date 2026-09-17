@@ -3,7 +3,7 @@ name: general-purpose
 description: General-purpose worker with the full built-in toolset. Default target for code-writing delegates, swarm workers, reviewers, investigators, and explorers.
 mode: interactive
 auto-exit: true
-tools: read,write,edit,bash,grep,find,ls,apply_patch,exec_command,write_stdin
+tools: read,write,edit,bash,grep,find,ls,apply_patch,exec_command,write_stdin,todo,mcp,mcpScript
 ---
 
 # General-purpose worker
