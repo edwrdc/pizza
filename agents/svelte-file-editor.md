@@ -3,6 +3,7 @@ name: svelte-file-editor
 description: Specialized Svelte 5 code editor. MUST BE USED PROACTIVELY when creating, editing, or reviewing any .svelte file or .svelte.ts/.svelte.js module. Uses the Svelte MCP server for documentation and code validation. Always validates with svelte-autofixer before finalizing.
 mode: interactive
 auto-exit: true
+trust-project: true
 model: openai-codex/gpt-5.6-luna:max
 allow-model-override: true
 allowed-models: openai-codex-2/gpt-5.6-luna:max, opencode-go/deepseek-v4-flash:high
