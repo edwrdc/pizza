@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { createRequire } from "node:module";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 
 // Multi Codex clones the base openai-codex provider with numbered ids. Clone
@@ -107,11 +108,25 @@ export function formatCodexUsage(snapshot) { return 'resets available: ' + snaps
 		},
 		ui: { notify: (message) => notifications.push(message) },
 	};
-	for (let attempt = 0; attempt < 2; attempt++) {
-		await commands.get("codex-usage-all").handler("", usageCtx);
-		const report = notifications.at(-1);
-		assert.match(report, /== openai-codex ==\nresets available: 4/);
-		assert.match(report, /== openai-codex-2 ==\nresets available: 3/);
+	// Bundled Pi transpiles imports with Jiti instead of using native TS loading.
+	// That transform used to discard the query distinguishing account clients.
+	const hostRequire = createRequire(import.meta.resolve("@earendil-works/pi-coding-agent"));
+	const { createJiti } = await import(pathToFileURL(hostRequire.resolve("jiti")).href);
+	const jiti = createJiti(import.meta.url, { tryNative: false, moduleCache: false });
+	const registerTranspiled = await jiti.import(extensionPath.href, { default: true });
+	const transpiledCommands = new Map();
+	registerTranspiled({
+		registerProvider() {},
+		registerCommand: (name, command) => transpiledCommands.set(name, command),
+	});
+	// Transpiled first: preloading clients natively can hide VM import failures.
+	for (const commandSet of [transpiledCommands, commands]) {
+		for (let attempt = 0; attempt < 2; attempt++) {
+			await commandSet.get("codex-usage-all").handler("", usageCtx);
+			const report = notifications.at(-1);
+			assert.match(report, /== openai-codex ==\nresets available: 4/);
+			assert.match(report, /== openai-codex-2 ==\nresets available: 3/);
+		}
 	}
 } finally {
 	rmSync(root, { recursive: true, force: true });

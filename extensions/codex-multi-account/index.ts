@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { aborted } from "node:util";
+import { compileFunction, constants } from "node:vm";
 
 const BASE_PROVIDER = "openai-codex";
 const MAX_ACCOUNTS = 4;
@@ -199,6 +200,12 @@ async function accountReport(ctx: ExtensionContext): Promise<string> {
 
 const USAGE_PKG_REL = join("npm", "node_modules", "@howaboua", "pi-codex-conversion", "dist", "codex-usage", "client.js");
 
+// Pi's Jiti transform strips URL queries from import(). Keep this literal
+// import outside the transform so provider-specific URLs retain separate caches.
+const importUsageModule = compileFunction("return import(url)", ["url"], {
+	importModuleDynamically: constants.USE_MAIN_CONTEXT_DEFAULT_LOADER,
+}) as (url: string) => Promise<Record<string, unknown>>;
+
 function codexConversionUsagePath(cwd?: string): string {
 	if (cwd) {
 		const projectPkg = join(cwd, CONFIG_DIR_NAME, USAGE_PKG_REL);
@@ -215,8 +222,8 @@ async function loadUsageModule(ctx: ExtensionContext, provider: string): Promise
 	clientUrl.searchParams.set("pizza-account", provider);
 	try {
 		const [client, format] = await Promise.all([
-			import(clientUrl.href) as Promise<Pick<CodexUsageModule, "fetchCodexUsage">>,
-			import(pathToFileURL(join(dirname(filePath), "format.js")).href) as Promise<Pick<CodexUsageModule, "formatCodexUsage">>,
+			importUsageModule(clientUrl.href) as Promise<Pick<CodexUsageModule, "fetchCodexUsage">>,
+			importUsageModule(pathToFileURL(join(dirname(filePath), "format.js")).href) as Promise<Pick<CodexUsageModule, "formatCodexUsage">>,
 		]);
 		return { ...client, ...format };
 	} catch {
