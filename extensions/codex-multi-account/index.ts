@@ -1,10 +1,11 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { CONFIG_DIR_NAME, getAgentDir } from "@earendil-works/pi-coding-agent";
-import { createProvider, lazyOAuth, type Model, type OAuthAuth } from "@earendil-works/pi-ai";
+import type { Model, OAuthAuth } from "@earendil-works/pi-ai";
 import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
 import { pathToFileURL } from "node:url";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { aborted } from "node:util";
 
 const BASE_PROVIDER = "openai-codex";
 const MAX_ACCOUNTS = 4;
@@ -66,27 +67,43 @@ export default function codexMultiAccountExtension(pi: ExtensionAPI) {
 	if (!codexOAuth) throw new Error("openai-codex provider has no OAuth authentication in this Pi build");
 
 	const codexModels = baseCodex.getModels();
-	const codexApi = {
-		stream: baseCodex.stream.bind(baseCodex),
-		streamSimple: baseCodex.streamSimple.bind(baseCodex),
-	};
-
 	for (const id of ACCOUNT_PROVIDERS) {
 		const accountNumber = id.slice(BASE_PROVIDER.length + 1);
-		pi.registerProvider(createProvider({
-			id,
+		// Conversion registers named stream overlays. Pi replaces native registrations
+		// with those overlays, but merges named registrations, preserving OAuth/models.
+		pi.registerProvider(id, {
 			name: `OpenAI Codex #${accountNumber}`,
 			baseUrl: "https://chatgpt.com/backend-api",
-			auth: {
-				oauth: lazyOAuth({
-					name: `OpenAI Codex #${accountNumber} (ChatGPT Plus/Pro)`,
-					isSubscription: true,
-					load: async () => codexOAuth,
+			api: "openai-codex-responses",
+			streamSimple: baseCodex.streamSimple.bind(baseCodex),
+			oauth: {
+				name: `OpenAI Codex #${accountNumber} (ChatGPT Plus/Pro)`,
+				isSubscription: true,
+				login: (callbacks) => codexOAuth.login({
+					signal: callbacks.signal ?? new AbortController().signal,
+					prompt: async (prompt) => {
+						const signal = AbortSignal.any([callbacks.signal, prompt.signal].filter((value): value is AbortSignal => !!value));
+						signal.throwIfAborted();
+						const input = prompt.type === "select"
+							? callbacks.onSelect({ ...prompt, options: [...prompt.options] })
+							: prompt.type === "manual_code" && callbacks.onManualCodeInput
+								? callbacks.onManualCodeInput()
+								: callbacks.onPrompt(prompt);
+						const value = await Promise.race([input, aborted(signal, input).then(() => { throw signal.reason; })]);
+						if (value === undefined) throw new Error("Login cancelled");
+						return value;
+					},
+					notify: (event) => {
+						if (event.type === "auth_url") callbacks.onAuth(event);
+						else if (event.type === "device_code") callbacks.onDeviceCode(event);
+						else callbacks.onProgress?.(event.message);
+					},
 				}),
+				refreshToken: (credential, signal) => codexOAuth.refresh({ ...credential, type: "oauth" }, signal),
+				getApiKey: (credential) => credential.access,
 			},
 			models: codexModels.map((model) => ({ ...model, provider: id })),
-			api: codexApi,
-		}));
+		});
 	}
 
 	pi.registerCommand("codex-accounts", {
