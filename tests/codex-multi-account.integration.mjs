@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -77,6 +77,42 @@ try {
 	});
 	cancel.abort(new Error("test aborted"));
 	await assert.rejects(cancelledLogin, /test aborted/);
+
+	// Two users may share a ChatGPT account ID. Reproduce Conversion's single
+	// account-keyed cache and ensure the command isolates it by provider.
+	const usageDir = join(root, "agent", "npm", "node_modules", "@howaboua", "pi-codex-conversion", "dist", "codex-usage");
+	mkdirSync(usageDir, { recursive: true });
+	writeFileSync(join(usageDir, "package.json"), JSON.stringify({ type: "module" }));
+	writeFileSync(join(usageDir, "client.js"), `
+let resetCache;
+export async function fetchCodexUsage(ctx) {
+  const auth = await ctx.modelRegistry.getApiKeyAndHeaders(ctx.model);
+  if (!resetCache || resetCache.key !== auth.accountId) {
+    resetCache = { key: auth.accountId, value: { availableCount: auth.resetCount, credits: [] } };
+  }
+  return { resetCredits: resetCache.value };
+}
+`);
+	writeFileSync(join(usageDir, "format.js"), `
+export function formatCodexUsage(snapshot) { return 'resets available: ' + snapshot.resetCredits.availableCount; }
+`);
+	const notifications = [];
+	const usageCtx = {
+		cwd: projectRoot,
+		isProjectTrusted: () => false,
+		modelRegistry: {
+			getProviderAuth: async (id) => ["openai-codex", "openai-codex-2"].includes(id) ? { source: "OAuth" } : undefined,
+			getAll: () => runtime.getModels(),
+			getApiKeyAndHeaders: async (model) => ({ accountId: "shared-account", resetCount: model.provider === "openai-codex" ? 4 : 3 }),
+		},
+		ui: { notify: (message) => notifications.push(message) },
+	};
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await commands.get("codex-usage-all").handler("", usageCtx);
+		const report = notifications.at(-1);
+		assert.match(report, /== openai-codex ==\nresets available: 4/);
+		assert.match(report, /== openai-codex-2 ==\nresets available: 3/);
+	}
 } finally {
 	rmSync(root, { recursive: true, force: true });
 }

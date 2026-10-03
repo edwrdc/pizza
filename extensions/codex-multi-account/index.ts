@@ -122,12 +122,6 @@ export default function codexMultiAccountExtension(pi: ExtensionAPI) {
 				return;
 			}
 
-			const usageModule = await loadUsageModule(ctx);
-			if (!usageModule) {
-				ctx.ui.notify("Codex Conversion usage support is unavailable. Install it from /pizza packages.", "error");
-				return;
-			}
-
 			const sections = await Promise.all(loggedIn.map(async (provider) => {
 				const model = ctx.modelRegistry.getAll().find(
 					(candidate) => candidate.provider === provider && candidate.input.includes("text"),
@@ -135,6 +129,8 @@ export default function codexMultiAccountExtension(pi: ExtensionAPI) {
 				if (!model) return `== ${provider} ==\nno model registered`;
 
 				try {
+					const usageModule = await loadUsageModule(ctx, provider);
+					if (!usageModule) return `== ${provider} ==\nCodex Conversion usage support is unavailable. Install it from /pizza packages.`;
 					const snapshot = await usageModule.fetchCodexUsage({ ...ctx, model } as ExtensionContext);
 					const expiryLine = formatResetCreditExpiryLine(snapshot);
 					return `== ${provider} ==\n${usageModule.formatCodexUsage(snapshot)}${expiryLine ? `\n${expiryLine}` : ""}`;
@@ -211,11 +207,15 @@ function codexConversionUsagePath(cwd?: string): string {
 	return join(getAgentDir(), USAGE_PKG_REL);
 }
 
-async function loadUsageModule(ctx: ExtensionContext): Promise<CodexUsageModule | undefined> {
+async function loadUsageModule(ctx: ExtensionContext, provider: string): Promise<CodexUsageModule | undefined> {
 	const filePath = codexConversionUsagePath(ctx.isProjectTrusted() ? ctx.cwd : undefined);
+	// Conversion caches resets by account ID, which multiple users can share.
+	// A stable module URL per provider keeps those clients' caches independent.
+	const clientUrl = pathToFileURL(filePath);
+	clientUrl.searchParams.set("pizza-account", provider);
 	try {
 		const [client, format] = await Promise.all([
-			import(pathToFileURL(filePath).href) as Promise<Pick<CodexUsageModule, "fetchCodexUsage">>,
+			import(clientUrl.href) as Promise<Pick<CodexUsageModule, "fetchCodexUsage">>,
 			import(pathToFileURL(join(dirname(filePath), "format.js")).href) as Promise<Pick<CodexUsageModule, "formatCodexUsage">>,
 		]);
 		return { ...client, ...format };
