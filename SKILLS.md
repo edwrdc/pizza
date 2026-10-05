@@ -104,6 +104,35 @@ Provides guidance for writing modern Svelte components and modules.
   pnx skills@latest add sveltejs/ai-tools --skill svelte-core-bestpractices --agent pi --global --yes
   ```
 
+### `technical-writing`
+
+Provides a layered technical-writing standard: Diátaxis document modes, Google developer style sentences, STE instruction rules, and Global English sentence checks.
+
+- Upstream: <https://github.com/cursor/plugins/blob/main/pstack/skills/technical-writing/SKILL.md>
+- Local copy: `~/.agents/skills/technical-writing/SKILL.md`
+- Reference command:
+
+  ```bash
+  pnx skills@latest add cursor/plugins --skill technical-writing --agent pi --global --yes
+  ```
+
+- Local deviation: the installed copy omits `disable-model-invocation: true` from the frontmatter on purpose. Upstream sets that key, which hides the skill from automatic model selection in Pi. A reinstall restores the key, so remove it again after any install or update. The local copy is not tracked in `~/.agents/.skill-lock.json`, because the install was written by hand rather than by the `skills` CLI.
+
+### `thermo-nuclear-code-quality-review`
+
+Provides a strict maintainability review rubric: structural simplification, abstraction quality, giant files, spaghetti-condition growth, and review tone.
+
+- Upstream: <https://github.com/cursor/plugins/blob/main/thermos/skills/thermo-nuclear-code-quality-review/SKILL.md>
+- Local copy: `~/.agents/skills/thermo-nuclear-code-quality-review/SKILL.md`
+- Reference command:
+
+  ```bash
+  pnx skills@latest add cursor/plugins --skill thermo-nuclear-code-quality-review --agent pi --global --yes
+  ```
+
+- Local deviation: the installed copy omits `disable-model-invocation: true` from the frontmatter on purpose. Upstream sets that key, which hides the skill from automatic model selection in Pi. A reinstall restores the key, so remove it again after any install or update. The local copy is not tracked in `~/.agents/.skill-lock.json`, because the install was written by hand rather than by the `skills` CLI.
+- Duplicate upstream path: `cursor/plugins` ships this skill twice, at `thermos/skills/` and at `cursor-team-kit/skills/`. The two files are byte-identical today. `thermos` is the maintained home, so record that path when the copies diverge. A `--skill thermo-nuclear-code-quality-review` install may resolve either copy, so check the fetched content before trusting an update.
+
 ## Adding or changing skills
 
 ### Add a personal skill
