@@ -19,9 +19,7 @@ function filesUnder(path) {
 
 try {
 	mkdirSync(join(agentDir, "agents"), { recursive: true });
-	mkdirSync(join(agentDir, "skills", "deepwiki"), { recursive: true });
 	mkdirSync(join(sharedSkills, "grilling"), { recursive: true });
-	writeFileSync(join(agentDir, "skills", "deepwiki", "marker"), "owned duplicate");
 	writeFileSync(join(sharedSkills, "grilling", "marker"), "external skill");
 	writeFileSync(join(agentDir, "mcp.json"), readFileSync(join(projectRoot, "mcp.json")));
 	symlinkSync(join(projectRoot, "agents", "retired-agent.md"), join(agentDir, "agents", "retired-agent.md"));
@@ -76,14 +74,13 @@ try {
 	};
 	await commands.get("pizza").handler("setup", ctx);
 
-	for (const name of ["deepwiki-research.md", "general-purpose.md", "svelte-file-editor.md"]) {
+	for (const name of ["general-purpose.md", "scout.md", "svelte-file-editor.md"]) {
 		const path = join(agentDir, "agents", name);
 		assert(existsSync(path) && lstatSync(path).isSymbolicLink(), `Missing discovered agent link: ${name}`);
 	}
 	assert(lstatSync(join(agentDir, "mcp.json")).isSymbolicLink(), "MCP link was not installed");
 	assert(!existsSync(join(agentDir, "agents", "retired-agent.md")), "Retired Pizza agent link was not removed");
 	assert(lstatSync(join(agentDir, "agents", "my-worker-alias.md")).isSymbolicLink(), "User-created agent alias was removed");
-	assert(!existsSync(join(agentDir, "skills", "deepwiki")), "Owned skill collision was not migrated");
 	assert.equal(readFileSync(join(sharedSkills, "grilling", "marker"), "utf8"), "external skill");
 	assert(
 		filesUnder(join(agentDir, "pizza-backups")).some(
@@ -115,7 +112,7 @@ try {
 	};
 	await commands.get("pizza").handler("unlink", ctx);
 	assert.equal(readFileSync(join(agentDir, "mcp.json"), "utf8"), "user replacement");
-	for (const name of ["deepwiki-research.md", "general-purpose.md", "svelte-file-editor.md"]) {
+	for (const name of ["general-purpose.md", "scout.md", "svelte-file-editor.md"]) {
 		assert(!existsSync(join(agentDir, "agents", name)), `Owned agent link survived unlink: ${name}`);
 	}
 	assert(lstatSync(join(agentDir, "agents", "my-worker-alias.md")).isSymbolicLink(), "User-created alias was removed by unlink");

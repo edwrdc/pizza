@@ -53,6 +53,7 @@ type SupportLink = (typeof SUPPORT_LINKS)[number];
 
 function packageSkillNames(): string[] {
 	const root = join(PACKAGE_ROOT, "skills");
+	if (!pathExists(root)) return []; // Pizza may declare the manifest entry before it owns any skill.
 	return readdirSync(root, { withFileTypes: true })
 		.filter((entry) => entry.isDirectory() && pathExists(join(root, entry.name, "SKILL.md")))
 		.map((entry) => entry.name)

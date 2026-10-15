@@ -14,11 +14,9 @@ Read this file before adding, removing, replacing, or updating a skill.
 
 ## Pizza-owned skills
 
-### `deepwiki`
+Pizza currently owns no skills. The `skills/` entry stays in the package manifest, so adding `skills/<name>/SKILL.md` is enough to publish a new personal skill.
 
-Researches public GitHub repositories through DeepWiki and returns compact, source-grounded handoff notes.
-
-Source: [`skills/deepwiki/`](skills/deepwiki/)
+The `deepwiki` skill was removed when DeepWiki research was dropped from this setup.
 
 ## Third-party skill references
 

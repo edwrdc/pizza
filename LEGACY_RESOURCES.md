@@ -26,6 +26,10 @@ Pizza was reset around the personal resources that were active globally. The res
 
 These names are archival notes, not package declarations. Reintroduce a resource only after reviewing its current implementation and ownership.
 
+## Later removals
+
+- `deepwiki` skill, `deepwiki-research` agent, and the `deepwiki` MCP server entry. Removed when DeepWiki research was dropped from this setup.
+
 ## Upgrade note
 
 The old `install.sh` copied skills into `~/.agents/skills/` and linked agents from an authoring checkout. Pizza 2 does not remove those files because they are outside its current ownership boundary.

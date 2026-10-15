@@ -3,10 +3,6 @@
     "svelte": {
       "url": "https://mcp.svelte.dev/mcp",
       "lifecycle": "lazy"
-    },
-    "deepwiki": {
-      "url": "https://mcp.deepwiki.com/mcp",
-      "lifecycle": "lazy"
     }
   }
 }
