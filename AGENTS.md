@@ -17,6 +17,7 @@ Pizza owns:
 
 - `extensions/pizza.ts`
 - `extensions/codex-multi-account/`
+- `extensions/underclass/`
 - personal package skills under `skills/`
 - support files under `agents/` and `mcp.json`
 - the installation catalog in `catalog/community-packages.json`

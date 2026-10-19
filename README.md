@@ -106,6 +106,25 @@ Before removing Pizza itself, unlink its support files while the `/pizza` comman
 
 Then run `pi remove git:github.com/edwrdc/pizza`. If Pizza was already removed, inspect the active Pi agent directory (`$PI_CODING_AGENT_DIR` or `~/.pi/agent`). Remove only dangling symlinks under `agents/` whose targets point into Pizza's package, plus the `mcp.json` symlink if it points into Pizza. Do not delete regular files.
 
+## Underclass
+
+Pizza includes an Underclass extension under `extensions/underclass/`. It registers a self-hosted [underclass](https://github.com/ghuntley/underclass) instance on the OpenAI Responses API (`/v1/responses`) and exposes that instance's admin state and usage.
+
+Pizza vendors the Codex model list in `extensions/underclass/codex-models.ts`, including GPT-6.1 Sol, because underclass's own `/v1/models` is stale and incomplete. Models underclass reports that are not in that list are added as extras; discovered entries that do not advertise `codex` in `owned_by` are skipped, because Copilot-backed ids only serve `/v1/chat/completions`.
+
+```text
+/login underclass
+/underclass setup
+/underclass status
+/underclass accounts
+/underclass usage
+/underclass refresh
+/underclass pcc
+/underclass help
+```
+
+The default origin is `https://underclass.edwrdc.me`. Point at your own instance with the `UNDERCLASS_ORIGIN` environment variable or `/underclass setup`, which writes the origin to `extensions/underclass.json` in the active Pi agent directory. `/underclass pcc`, and `/underclass setup` with it, add `underclass` to `scope.additionalProviders` in `pi-codex-conversion.json` so Codex Conversion's Codex-shaped adapter activates for underclass models (Additional providers). Both secrets live in `auth.json`: the proxy key under `underclass` (written by `/login underclass`) and the admin `ui_token` under `underclass-admin` (written by `/underclass setup`).
+
 ## Community package catalog
 
 The pantry entries live in [`catalog/community-packages.json`](catalog/community-packages.json). They are installation suggestions, not vendored dependencies and not resources owned by Pizza.
