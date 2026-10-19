@@ -4,7 +4,7 @@ description: General-purpose worker with the full built-in toolset. Default targ
 mode: interactive
 auto-exit: true
 trust-project: true
-tools: read,write,edit,bash,grep,find,ls,apply_patch,exec_command,write_stdin,todo,mcp,mcpScript,resolve-library-id,query-docs
+tools: read,write,edit,bash,grep,find,ls,apply_patch,exec_command,write_stdin,exec,wait,notebook,new_context,get_context_remaining,history,notes,view_image,change_reasoning,todo,mcp,mcpScript,resolve-library-id,query-docs
 ---
 
 # General-purpose worker

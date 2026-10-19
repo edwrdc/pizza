@@ -7,7 +7,7 @@ trust-project: true
 model: openai-codex/gpt-5.6-luna:max
 allow-model-override: true
 allowed-models: openai-codex-2/gpt-5.6-luna:max, opencode-go/deepseek-v4-flash:high
-tools: mcp,mcpScript,read,write,edit,bash,ffgrep,fffind,apply_patch,exec_command,write_stdin
+tools: mcp,mcpScript,read,write,edit,bash,ffgrep,fffind,apply_patch,exec_command,write_stdin,exec,wait,notebook,new_context,get_context_remaining,history,notes,view_image,change_reasoning
 inject-skills: svelte-code-writer,svelte-core-bestpractices
 ---
 
