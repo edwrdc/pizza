@@ -5,8 +5,9 @@
 // window instead of an input budget. Pizza therefore ships this list itself.
 //
 // Values mirror what Pi's openai-codex provider advertises: the builtin catalog plus
-// the supplementals from Codex Conversion 4.0.2. Responses-specific fields (api,
-// baseUrl, compat, promptCache, samplingParams) are intentionally excluded.
+// the supplementals from Codex Conversion 4.0.2 and GPT-6.1 Terra from 4.0.5.
+// Responses-specific fields (api, baseUrl, compat, promptCache, samplingParams)
+// are intentionally excluded.
 
 import type { ModelCost, ThinkingLevelMap } from "@earendil-works/pi-ai";
 
@@ -111,6 +112,16 @@ export const CODEX_MODELS: LocalCodexModel[] = [
 		maxTokens: 128000,
 		reasoning: true,
 		thinkingLevelMap: {"off":null,"minimal":null,"low":"low","medium":"medium","high":"high","xhigh":"xhigh","max":"max"},
+	},
+	{
+		id: "gpt-6.1-terra",
+		name: "GPT-6.1 Terra",
+		input: ["text","image"],
+		cost: {"input":1,"output":5,"cacheRead":0.05,"cacheWrite":1.25,"tiers":[{"inputTokensAbove":272000,"input":2,"output":7.5,"cacheRead":0.1,"cacheWrite":2.5}]},
+		contextWindow: 500000,
+		maxTokens: 128000,
+		reasoning: true,
+		thinkingLevelMap: {"off":null,"minimal":null,"xhigh":"xhigh","max":"max"},
 	},
 	{
 		id: "gpt-daybreak-blue-latest",

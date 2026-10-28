@@ -23,6 +23,7 @@ const vendoredIds = [
 	"gpt-6-luna",
 	"gpt-6-sol",
 	"gpt-6.1-sol",
+	"gpt-6.1-terra",
 	"gpt-daybreak-blue-latest",
 	"gpt-daybreak-red-latest",
 ];
@@ -76,6 +77,17 @@ try {
 	const vendoredSol = seeded.find((model) => model.id === "gpt-6.1-sol");
 	assert.equal(vendoredSol.contextWindow, 500_000);
 	assert.equal(vendoredSol.maxTokens, 128_000);
+	const vendoredTerra = seeded.find((model) => model.id === "gpt-6.1-terra");
+	assert.equal(vendoredTerra.name, "GPT-6.1 Terra");
+	assert.equal(vendoredTerra.contextWindow, 500_000);
+	assert.equal(vendoredTerra.maxTokens, 128_000);
+	assert.deepEqual(vendoredTerra.input, ["text", "image"]);
+	assert.equal(vendoredTerra.reasoning, true);
+	assert.deepEqual(vendoredTerra.thinkingLevelMap, { off: null, minimal: null, xhigh: "xhigh", max: "max" });
+	assert.deepEqual(vendoredTerra.cost, {
+		input: 1, output: 5, cacheRead: 0.05, cacheWrite: 1.25,
+		tiers: [{ inputTokensAbove: 272_000, input: 2, output: 7.5, cacheRead: 0.1, cacheWrite: 2.5 }],
+	});
 
 	const auth = registered.auth.apiKey;
 	const ctx = { env: async () => undefined, fileExists: async () => false };
