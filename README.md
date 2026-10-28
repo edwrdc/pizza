@@ -112,13 +112,14 @@ Pizza includes an Underclass extension under `extensions/underclass/`. It regist
 
 Pizza vendors the Codex model list in `extensions/underclass/codex-models.ts`, including GPT-6.1 Sol, because underclass's own `/v1/models` is stale and incomplete. Models underclass reports that are not in that list are added as extras; discovered entries that do not advertise `codex` in `owned_by` are skipped, because Copilot-backed ids only serve `/v1/chat/completions`.
 
+Pi refreshes the Underclass catalog from `/v1/models` automatically at interactive startup, after `/login underclass`, and when you open `/model`. Failed refreshes keep the cached catalog.
+
 ```text
 /login underclass
 /underclass setup
 /underclass status
 /underclass accounts
 /underclass usage
-/underclass refresh
 /underclass pcc
 /underclass help
 ```

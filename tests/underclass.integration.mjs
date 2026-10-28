@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, wri
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { createModels, InMemoryCredentialStore } from "@earendil-works/pi-ai";
 
 // Underclass is registered as an OpenAI Responses provider backed by auth.json
 // credentials. This test drives the extension without network by stubbing fetch.
@@ -39,10 +40,13 @@ try {
 
 	const providers = [];
 	const commands = new Map();
+	const credentials = new InMemoryCredentialStore();
+	const runtime = createModels({ credentials });
 	const pi = {
 		on() {},
 		registerProvider(provider) {
 			providers.push(provider);
+			runtime.setProvider(provider);
 		},
 		registerCommand(name, command) {
 			commands.set(name, command);
@@ -60,6 +64,7 @@ try {
 
 	// 1. No credential and no stubbed endpoint: registration must still happen.
 	await underclassExtension(pi);
+	await runtime.refresh();
 	assert.equal(fetchCalls.length, 0, "startup without a key must not call fetch");
 	const registered = providers.at(-1);
 	assert.equal(registered.id, "underclass");
@@ -130,6 +135,7 @@ try {
 		other: { type: "api_key", key: "keep" },
 		underclass: { type: "api_key", key: "sk-underclass-key" },
 	}));
+	await credentials.modify("underclass", async () => ({ type: "api_key", key: "sk-underclass-key" }));
 	fetchCalls = [];
 	globalThis.fetch = async (url, init) => {
 		fetchCalls.push({ url: String(url), headers: init?.headers });
@@ -145,6 +151,8 @@ try {
 		throw new Error(`Unexpected fetch: ${url}`);
 	};
 	await underclassExtension(pi);
+	assert.equal(fetchCalls.length, 0, "extension loading must not do network I/O");
+	assert.equal((await runtime.refresh()).errors.size, 0);
 	const discovered = providers.at(-1);
 	const models = discovered.getModels();
 	assert.deepEqual(models.map((model) => model.id), [...vendoredIds, "gpt-5.4", "mystery-model"]);
@@ -184,6 +192,65 @@ try {
 		reasoning: false,
 	});
 
+	// Native refresh replaces extras, preserves cached models on failure, and supports offline startup.
+	const modelFetch = globalThis.fetch;
+	globalThis.fetch = async () => ({ ok: true, json: async () => ({ data: [{ id: "new-model" }] }) });
+	assert.equal((await runtime.refresh()).errors.size, 0);
+	const refreshedIds = [...vendoredIds, "new-model"];
+	assert.deepEqual(discovered.getModels().map((model) => model.id), refreshedIds);
+	for (const failingFetch of [
+		async () => { throw new Error("network failure"); },
+		async () => ({ ok: false, status: 503 }),
+		async () => ({ ok: true, json: async () => ({}) }),
+		async () => ({ ok: true, json: async () => { throw new SyntaxError("invalid JSON"); } }),
+	]) {
+		globalThis.fetch = failingFetch;
+		assert.equal((await runtime.refresh()).errors.has("underclass"), true);
+		assert.deepEqual(discovered.getModels().map((model) => model.id), refreshedIds);
+	}
+
+	const controller = new AbortController();
+	globalThis.fetch = async (_url, init) => {
+		assert(init.signal instanceof AbortSignal);
+		controller.abort();
+		assert.equal(init.signal.aborted, true, "caller cancellation must reach fetch");
+		throw init.signal.reason;
+	};
+	assert.equal((await runtime.refresh({ signal: controller.signal })).aborted, true);
+	assert.deepEqual(discovered.getModels().map((model) => model.id), refreshedIds);
+
+	globalThis.fetch = async () => { throw new Error("offline refresh must not fetch"); };
+	await underclassExtension(pi);
+	assert.equal((await runtime.refresh({ allowNetwork: false })).errors.size, 0);
+	assert.deepEqual(runtime.getModels().map((model) => model.id), refreshedIds);
+
+	// Switching origins must not restore models that would send requests to the old host.
+	writeFileSync(configPath, JSON.stringify({ origin: "https://other.example.com" }));
+	await underclassExtension(pi);
+	await runtime.refresh({ allowNetwork: false });
+	assert.deepEqual(runtime.getModels().map((model) => model.id), vendoredIds);
+	assert(runtime.getModels().every((model) => model.baseUrl === "https://other.example.com/v1"));
+	writeFileSync(configPath, JSON.stringify({ origin: "https://under.example.com" }));
+	await underclassExtension(pi);
+
+	// A valid empty response removes discovered extras but keeps the vendored baseline.
+	globalThis.fetch = async () => ({ ok: true, json: async () => ({ data: [] }) });
+	await runtime.refresh();
+	assert.deepEqual(runtime.getModels().map((model) => model.id), vendoredIds);
+
+	// Environment-only credentials also drive native discovery after login/refresh.
+	process.env.UNDERCLASS_PROXY_KEY = "sk-env-discovery";
+	globalThis.fetch = async (_url, init) => {
+		assert.equal(init.headers.Authorization, "Bearer sk-env-discovery");
+		return { ok: true, json: async () => ({ data: [{ id: "env-model" }] }) };
+	};
+	const envRuntime = createModels();
+	envRuntime.setProvider(providers.at(-1));
+	assert.equal((await envRuntime.refresh()).errors.size, 0);
+	assert(envRuntime.getModel("underclass", "env-model"));
+	delete process.env.UNDERCLASS_PROXY_KEY;
+	globalThis.fetch = modelFetch;
+
 	// 4. One command is registered and routes subcommands.
 	assert(commands.has("underclass"), "Missing command: underclass");
 
@@ -192,6 +259,10 @@ try {
 	const commandCtx = {
 		cwd: root,
 		isProjectTrusted: () => false,
+		modelRegistry: {
+			refresh: (options) => runtime.refresh(options),
+			getAll: () => runtime.getModels(),
+		},
 		ui: {
 			notify(message, level) {
 				notifications.push({ message, level });
@@ -205,6 +276,9 @@ try {
 	notifications.length = 0;
 	await commands.get("underclass").handler("", commandCtx);
 	assert.match(notifications.at(-1).message, /\/underclass setup/);
+	assert(!notifications.at(-1).message.includes("/underclass refresh"));
+	await commands.get("underclass").handler("refresh", commandCtx);
+	assert.match(notifications.at(-1).message, /Unknown subcommand "refresh"/);
 	await commands.get("underclass").handler("bogus", commandCtx);
 	assert.equal(notifications.at(-1).level, "warning");
 	assert.match(notifications.at(-1).message, /Unknown subcommand "bogus"/);
@@ -261,6 +335,13 @@ try {
 	const pccAfterSetup = JSON.parse(readFileSync(pccPath, "utf8"));
 	assert.deepEqual(pccAfterSetup.scope.additionalProviders, ["underclass"]);
 	assert.deepEqual(pccAfterSetup.sibling, { keep: true });
+
+	// Failed discovery does not make setup reject after credentials were saved.
+	globalThis.fetch = async () => ({ ok: false, status: 503 });
+	inputs.push("https://self.example.com/", "ui-token-123");
+	await commands.get("underclass").handler("setup", commandCtx);
+	assert.equal(notifications.at(-1).level, "warning");
+	assert.match(notifications.at(-1).message, /Origin and admin token saved/);
 
 	// 6. Admin commands authenticate with the stored ui_token.
 	fetchCalls = [];

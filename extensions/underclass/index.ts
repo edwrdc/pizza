@@ -22,7 +22,6 @@ const HELP = [
 	"/underclass status    Summarize admin state (accounts, flow)",
 	"/underclass accounts  List accounts from admin state",
 	"/underclass usage     Show usage totals and top model groups",
-	"/underclass refresh   Re-discover models and re-register the provider",
 	"/underclass pcc       Add underclass to Codex Conversion's providers",
 	"/underclass help      Show this help",
 ].join("\n");
@@ -87,7 +86,7 @@ function readAdminToken(): string | undefined {
 
 function readProxyKey(): string | undefined {
 	const credential = readStoredCredential(PROVIDER_ID, authFilePath());
-	return credential?.type === "api_key" ? credential.key : undefined;
+	return (credential?.type === "api_key" ? credential.key?.trim() : undefined) || process.env[PROXY_KEY_ENV]?.trim();
 }
 
 const proxyKeyAuth: ApiKeyAuth = {
@@ -152,38 +151,53 @@ function extraModel(origin: string, model: UnderclassModel): Model<"openai-respo
 	};
 }
 
-// Vendored codex models first; discovered ids not already listed come after.
-function buildCatalog(origin: string, extras: UnderclassModel[]): Model<"openai-responses">[] {
-	const models = CODEX_MODELS.map((model) => vendoredModel(origin, model));
-	const known = new Set(models.map((model) => model.id));
-	for (const extra of extras) {
-		if (known.has(extra.id)) continue;
-		known.add(extra.id);
-		models.push(extraModel(origin, extra));
-	}
-	return models;
-}
-
-function buildProvider(origin: string, models: Model<"openai-responses">[]): Provider {
-	return createProvider({
+/**
+ * @cc [owner:edwrdc,label:models] native-catalog-refresh
+ * Pi network catalog refreshes MUST query /v1/models with the resolved proxy key and
+ * cancellation signal. Failed discovery MUST retain the last catalog; vendored model
+ * metadata MUST take precedence over discovered entries.
+ */
+/**
+ * @cc [owner:edwrdc,label:security] origin-scoped-model-cache
+ * Cached discovered models MUST NOT be restored if their base URL differs from
+ * the configured origin plus /v1.
+ */
+function buildProvider(origin: string): Provider {
+	const known = new Set(CODEX_MODELS.map((model) => model.id));
+	const provider = createProvider({
 		id: PROVIDER_ID,
 		name: "Underclass",
 		baseUrl: `${origin}/v1`,
 		auth: { apiKey: proxyKeyAuth },
-		models,
+		models: CODEX_MODELS.map((model) => vendoredModel(origin, model)),
+		fetchModels: async ({ credential, signal }) => {
+			const apiKey = credential?.type === "api_key" ? credential.key : undefined;
+			const discovered = await discoverModels(origin, apiKey, signal);
+			if (discovered === undefined) throw new Error("Underclass model discovery failed");
+			return discovered.filter((model) => !known.has(model.id)).map((model) => extraModel(origin, model));
+		},
 		api: openAIResponsesApi(),
 	});
+	const refreshModels = provider.refreshModels!;
+	provider.refreshModels = (context) => refreshModels({
+		...context,
+		stored: context.stored && {
+			...context.stored,
+			models: context.stored.models.filter((model) => model.baseUrl === `${origin}/v1` && !known.has(model.id)),
+		},
+	});
+	return provider;
 }
 
 // undefined means discovery was skipped or failed; an empty array means the
 // instance answered with no models.
-async function discoverModels(origin: string, apiKey: string | undefined): Promise<UnderclassModel[] | undefined> {
+async function discoverModels(origin: string, apiKey: string | undefined, signal: AbortSignal): Promise<UnderclassModel[] | undefined> {
 	if (!apiKey) return undefined;
 	try {
-		const response = await fetch(`${origin}/v1/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
+		const response = await fetch(`${origin}/v1/models`, { headers: { Authorization: `Bearer ${apiKey}` }, signal });
 		if (!response.ok) return undefined;
 		const payload = await response.json() as { data?: unknown };
-		if (!Array.isArray(payload.data)) return [];
+		if (!Array.isArray(payload.data)) return undefined;
 		const seen = new Set<string>();
 		const models: UnderclassModel[] = [];
 		for (const value of payload.data) {
@@ -198,16 +212,12 @@ async function discoverModels(origin: string, apiKey: string | undefined): Promi
 	}
 }
 
-async function buildAndRegister(pi: ExtensionAPI): Promise<string> {
-	const origin = resolveOrigin();
-	const apiKey = readProxyKey();
-	const discovered = await discoverModels(origin, apiKey);
-	const models = buildCatalog(origin, discovered ?? []);
-	pi.registerProvider(buildProvider(origin, models));
-	if (discovered !== undefined) return `Underclass ready at ${origin}/v1 (${models.length} models).`;
-	return apiKey
-		? `Underclass registered at ${origin}/v1 with ${models.length} built-in models after discovery failed; retry with /underclass refresh.`
-		: `Underclass registered at ${origin}/v1 with ${models.length} built-in models. Run /login underclass, then /underclass refresh.`;
+async function refreshCatalog(ctx: ExtensionCommandContext): Promise<string> {
+	if (!readProxyKey()) return "Underclass registered with built-in models. Run /login underclass.";
+	const result = await ctx.modelRegistry.refresh({ providers: [PROVIDER_ID], signal: AbortSignal.timeout(15_000) });
+	if (result.aborted || result.errors.has(PROVIDER_ID)) throw new Error("Model discovery failed; keeping cached models.");
+	const models = ctx.modelRegistry.getAll().filter((model) => model.provider === PROVIDER_ID);
+	return `Underclass ready (${models.length} models).`;
 }
 
 function errorMessage(error: unknown): string {
@@ -310,22 +320,20 @@ async function setupCommand(pi: ExtensionAPI, ctx: ExtensionCommandContext): Pro
 		return;
 	}
 
-	ctx.ui.notify(`${await buildAndRegister(pi)}\nAdmin token stored in auth.json as ${ADMIN_CREDENTIAL_ID}.\n${conversion.message}`, "info");
+	try {
+		pi.registerProvider(buildProvider(origin));
+		ctx.ui.notify(`${await refreshCatalog(ctx)}\nAdmin token stored in auth.json as ${ADMIN_CREDENTIAL_ID}.\n${conversion.message}`, "info");
+	} catch (error) {
+		ctx.ui.notify(`Origin and admin token saved. Underclass refresh failed: ${errorMessage(error)}\n${conversion.message}`, "warning");
+	}
 }
 
-export default async function underclassExtension(pi: ExtensionAPI): Promise<void> {
+export default function underclassExtension(pi: ExtensionAPI): void {
 	let failure: string | undefined;
 	try {
-		await buildAndRegister(pi);
+		pi.registerProvider(buildProvider(resolveOrigin()));
 	} catch (error) {
 		failure = errorMessage(error);
-		try {
-			// Never let a provider registration failure break Pi startup.
-			const origin = resolveOrigin();
-			pi.registerProvider(buildProvider(origin, buildCatalog(origin, [])));
-		} catch {
-			// A failed fallback registration must not break Pi startup either.
-		}
 	}
 
 	pi.on("session_start", (_event, ctx) => {
@@ -335,7 +343,7 @@ export default async function underclassExtension(pi: ExtensionAPI): Promise<voi
 		}
 		if (readProxyKey()) return;
 		ctx.ui.notify(
-			`Underclass is registered at ${resolveOrigin()}/v1 without a proxy key. Run /login underclass, then /underclass refresh.`,
+			`Underclass is registered at ${resolveOrigin()}/v1 without a proxy key. Run /login underclass.`,
 			"warning",
 		);
 	});
@@ -360,13 +368,6 @@ export default async function underclassExtension(pi: ExtensionAPI): Promise<voi
 					await withAdminToken(ctx, async (token) =>
 						formatUsage(await adminFetch("/admin/api/usage?group_by=model&limit=10", token)),
 					);
-					return;
-				case "refresh":
-					try {
-						ctx.ui.notify(await buildAndRegister(pi), "info");
-					} catch (error) {
-						ctx.ui.notify(`Underclass refresh failed: ${errorMessage(error)}`, "error");
-					}
 					return;
 				case "pcc": {
 					const conversion = mergeCodexConversionProviders();
