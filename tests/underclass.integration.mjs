@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createModels, InMemoryCredentialStore } from "@earendil-works/pi-ai";
+import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 
 // Underclass is registered as an OpenAI Responses provider backed by auth.json
 // credentials. This test drives the extension without network by stubbing fetch.
@@ -41,12 +42,13 @@ try {
 	const providers = [];
 	const commands = new Map();
 	const credentials = new InMemoryCredentialStore();
-	const runtime = createModels({ credentials });
+	const modelsPath = join(agentDir, "models.json");
+	const runtime = await ModelRuntime.create({ credentials, modelsPath });
 	const pi = {
 		on() {},
-		registerProvider(provider) {
-			providers.push(provider);
-			runtime.setProvider(provider);
+		registerProvider(name, config) {
+			runtime.registerProvider(name, config);
+			providers.push(runtime.getProvider(name));
 		},
 		registerCommand(name, command) {
 			commands.set(name, command);
@@ -96,7 +98,8 @@ try {
 
 	const auth = registered.auth.apiKey;
 	const ctx = { env: async () => undefined, fileExists: async () => false };
-	assert.equal(await auth.resolve({ ctx, credential: undefined, signal }), undefined);
+	assert(!runtime.getAvailableSnapshot().some((model) => model.provider === "underclass"));
+	await assert.rejects(auth.resolve({ ctx, credential: undefined, signal }), /UNDERCLASS_PROXY_KEY/);
 	assert.equal(
 		(await auth.resolve({ ctx, credential: { type: "api_key", key: "sk-stored" }, signal })).auth.apiKey,
 		"sk-stored",
@@ -113,7 +116,7 @@ try {
 		signal,
 		prompt: async (prompt) => {
 			assert.equal(prompt.type, "secret");
-			return " sk-underclass-login ";
+			return "sk-underclass-login";
 		},
 		notify() {},
 	}), { type: "api_key", key: "sk-underclass-login" });
@@ -179,7 +182,7 @@ try {
 	assert.equal(vendoredGpt56.reasoning, true);
 
 	// Unknown ids fall back to text input, zero cost, and the constant defaults.
-	assert.deepEqual(models.find((model) => model.id === "mystery-model"), {
+	assert.partialDeepStrictEqual(models.find((model) => model.id === "mystery-model"), {
 		id: "mystery-model",
 		name: "mystery-model",
 		api: "openai-responses",
@@ -192,7 +195,23 @@ try {
 		reasoning: false,
 	});
 
-	// Native refresh replaces extras, preserves cached models on failure, and supports offline startup.
+	// PCC's stream override must preserve models, auth, and catalog refresh.
+	const originalConfig = runtime.getRegisteredProviderConfig("underclass");
+	const overlayStream = () => { throw new Error("PCC stream override reached"); };
+	// PCC adds this partial registration when proxy Lite is enabled.
+	runtime.registerProvider("underclass", { api: "openai-responses", streamSimple: overlayStream });
+	await runtime.refresh();
+	assert.deepEqual(runtime.getAvailableSnapshot().filter((model) => model.provider === "underclass").map((model) => model.id), models.map((model) => model.id));
+	const overlaidConfig = runtime.getRegisteredProviderConfig("underclass");
+	assert.equal(overlaidConfig.refreshModels, originalConfig.refreshModels);
+	assert.equal(overlaidConfig.apiKey, originalConfig.apiKey);
+	assert.equal(overlaidConfig.streamSimple, overlayStream);
+	const overlaid = runtime.getProvider("underclass");
+	const streamed = await overlaid.streamSimple(runtime.getModel("underclass", "gpt-6.1-sol"), { messages: [] }, {}).result();
+	assert.equal(streamed.errorMessage, "PCC stream override reached");
+	assert.equal((await runtime.getAuth("underclass")).auth.apiKey, "sk-underclass-key");
+
+	// Refresh replaces extras, preserves cached models on failure, and supports offline startup.
 	const modelFetch = globalThis.fetch;
 	globalThis.fetch = async () => ({ ok: true, json: async () => ({ data: [{ id: "new-model" }] }) });
 	assert.equal((await runtime.refresh()).errors.size, 0);
@@ -222,21 +241,30 @@ try {
 	globalThis.fetch = async () => { throw new Error("offline refresh must not fetch"); };
 	await underclassExtension(pi);
 	assert.equal((await runtime.refresh({ allowNetwork: false })).errors.size, 0);
-	assert.deepEqual(runtime.getModels().map((model) => model.id), refreshedIds);
+	assert.deepEqual(runtime.getModels("underclass").map((model) => model.id), refreshedIds);
+
+	// A new Pi runtime must restore the catalog before and after PCC's startup override.
+	const restarted = await ModelRuntime.create({ credentials, modelsPath });
+	underclassExtension({ ...pi, registerProvider: (name, config) => restarted.registerProvider(name, config) });
+	await restarted.refresh({ allowNetwork: false });
+	assert.deepEqual(restarted.getAvailableSnapshot().filter((model) => model.provider === "underclass").map((model) => model.id), refreshedIds);
+	restarted.registerProvider("underclass", { api: "openai-responses", streamSimple: overlayStream });
+	await restarted.refresh({ allowNetwork: false });
+	assert.deepEqual(restarted.getAvailableSnapshot().filter((model) => model.provider === "underclass").map((model) => model.id), refreshedIds);
 
 	// Switching origins must not restore models that would send requests to the old host.
 	writeFileSync(configPath, JSON.stringify({ origin: "https://other.example.com" }));
 	await underclassExtension(pi);
 	await runtime.refresh({ allowNetwork: false });
-	assert.deepEqual(runtime.getModels().map((model) => model.id), vendoredIds);
-	assert(runtime.getModels().every((model) => model.baseUrl === "https://other.example.com/v1"));
+	assert.deepEqual(runtime.getModels("underclass").map((model) => model.id), vendoredIds);
+	assert(runtime.getModels("underclass").every((model) => model.baseUrl === "https://other.example.com/v1"));
 	writeFileSync(configPath, JSON.stringify({ origin: "https://under.example.com" }));
 	await underclassExtension(pi);
 
 	// A valid empty response removes discovered extras but keeps the vendored baseline.
 	globalThis.fetch = async () => ({ ok: true, json: async () => ({ data: [] }) });
 	await runtime.refresh();
-	assert.deepEqual(runtime.getModels().map((model) => model.id), vendoredIds);
+	assert.deepEqual(runtime.getModels("underclass").map((model) => model.id), vendoredIds);
 
 	// Environment-only credentials also drive native discovery after login/refresh.
 	process.env.UNDERCLASS_PROXY_KEY = "sk-env-discovery";

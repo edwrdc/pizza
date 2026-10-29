@@ -1,8 +1,6 @@
-import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext, ProviderConfig } from "@earendil-works/pi-coding-agent";
 import { getAgentDir, readStoredCredential } from "@earendil-works/pi-coding-agent";
-import type { ApiKeyAuth, ApiKeyCredential, AuthResult, Model, Provider } from "@earendil-works/pi-ai";
-import { createProvider } from "@earendil-works/pi-ai";
-import { openAIResponsesApi } from "@earendil-works/pi-ai/compat";
+import type { Model } from "@earendil-works/pi-ai";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { formatAccounts, formatStatus, formatUsage } from "./admin.ts";
@@ -89,23 +87,6 @@ function readProxyKey(): string | undefined {
 	return (credential?.type === "api_key" ? credential.key?.trim() : undefined) || process.env[PROXY_KEY_ENV]?.trim();
 }
 
-const proxyKeyAuth: ApiKeyAuth = {
-	name: "Underclass proxy key",
-	async login(interaction): Promise<ApiKeyCredential> {
-		const key = await interaction.prompt({
-			type: "secret",
-			message: "Enter Underclass proxy key (sk-underclass-…)",
-		});
-		return { type: "api_key", key: key.trim() };
-	},
-	async resolve({ ctx, credential }): Promise<AuthResult | undefined> {
-		const stored = credential?.type === "api_key" ? credential.key?.trim() : undefined;
-		const apiKey = stored || (await ctx.env(PROXY_KEY_ENV))?.trim();
-		if (!apiKey) return undefined;
-		return { auth: { apiKey }, source: stored ? "auth.json" : PROXY_KEY_ENV };
-	},
-};
-
 function positiveNumber(value: unknown): number | undefined {
 	return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
 }
@@ -162,31 +143,35 @@ function extraModel(origin: string, model: UnderclassModel): Model<"openai-respo
  * Cached discovered models MUST NOT be restored if their base URL differs from
  * the configured origin plus /v1.
  */
-function buildProvider(origin: string): Provider {
+function buildProvider(origin: string): ProviderConfig {
 	const known = new Set(CODEX_MODELS.map((model) => model.id));
-	const provider = createProvider({
-		id: PROVIDER_ID,
+	const baseline = CODEX_MODELS.map((model) => vendoredModel(origin, model));
+	// Keep this array shared so Pi's recomposition retains cached models after failed discovery.
+	const models = [...baseline];
+	// shortcut: use legacy registration for PCC Lite overlays until Pi/PCC preserve native providers.
+	return {
 		name: "Underclass",
 		baseUrl: `${origin}/v1`,
-		auth: { apiKey: proxyKeyAuth },
-		models: CODEX_MODELS.map((model) => vendoredModel(origin, model)),
-		fetchModels: async ({ credential, signal }) => {
-			const apiKey = credential?.type === "api_key" ? credential.key : undefined;
-			const discovered = await discoverModels(origin, apiKey, signal);
+		api: "openai-responses",
+		apiKey: `$${PROXY_KEY_ENV}`,
+		models,
+		refreshModels: async (context) => {
+			const cached = (context.stored?.models ?? []).filter((model): model is Model<"openai-responses"> =>
+				model.provider === PROVIDER_ID && model.api === "openai-responses" && model.baseUrl === `${origin}/v1` && !known.has(model.id),
+			);
+			if (!await context.publish({ update: () => { models.splice(0, models.length, ...baseline, ...cached); } })) return models;
+			if (!context.allowNetwork || context.signal.aborted) return models;
+			const apiKey = context.credential?.type === "api_key" ? context.credential.key : undefined;
+			const discovered = await discoverModels(origin, apiKey, context.signal);
 			if (discovered === undefined) throw new Error("Underclass model discovery failed");
-			return discovered.filter((model) => !known.has(model.id)).map((model) => extraModel(origin, model));
+			const extras = discovered.filter((model) => !known.has(model.id)).map((model) => extraModel(origin, model));
+			await context.publish({
+				persist: { models: extras, checkedAt: Date.now() },
+				update: () => { models.splice(0, models.length, ...baseline, ...extras); },
+			});
+			return models;
 		},
-		api: openAIResponsesApi(),
-	});
-	const refreshModels = provider.refreshModels!;
-	provider.refreshModels = (context) => refreshModels({
-		...context,
-		stored: context.stored && {
-			...context.stored,
-			models: context.stored.models.filter((model) => model.baseUrl === `${origin}/v1` && !known.has(model.id)),
-		},
-	});
-	return provider;
+	};
 }
 
 // undefined means discovery was skipped or failed; an empty array means the
@@ -321,7 +306,7 @@ async function setupCommand(pi: ExtensionAPI, ctx: ExtensionCommandContext): Pro
 	}
 
 	try {
-		pi.registerProvider(buildProvider(origin));
+		pi.registerProvider(PROVIDER_ID, buildProvider(origin));
 		ctx.ui.notify(`${await refreshCatalog(ctx)}\nAdmin token stored in auth.json as ${ADMIN_CREDENTIAL_ID}.\n${conversion.message}`, "info");
 	} catch (error) {
 		ctx.ui.notify(`Origin and admin token saved. Underclass refresh failed: ${errorMessage(error)}\n${conversion.message}`, "warning");
@@ -331,7 +316,7 @@ async function setupCommand(pi: ExtensionAPI, ctx: ExtensionCommandContext): Pro
 export default function underclassExtension(pi: ExtensionAPI): void {
 	let failure: string | undefined;
 	try {
-		pi.registerProvider(buildProvider(resolveOrigin()));
+		pi.registerProvider(PROVIDER_ID, buildProvider(resolveOrigin()));
 	} catch (error) {
 		failure = errorMessage(error);
 	}

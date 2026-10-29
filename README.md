@@ -114,6 +114,8 @@ Pizza vendors the Codex model list in `extensions/underclass/codex-models.ts`, i
 
 Pi refreshes the Underclass catalog from `/v1/models` automatically at interactive startup, after `/login underclass`, and when you open `/model`. Failed refreshes keep the cached catalog.
 
+Underclass uses Pi's legacy provider registration so PCC's proxy Responses Lite stream override merges with its models, authentication, and catalog refresh. PCC is optional.
+
 ```text
 /login underclass
 /underclass setup
