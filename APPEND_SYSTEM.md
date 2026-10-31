@@ -11,3 +11,8 @@ For user-facing explanations, loosely follow ASD-STE100 principles.
 - Keep explanations easy to scan, but preserve necessary technical detail.
 - Do not enforce ASD-STE100 vocabulary or sentence-length limits strictly.
 - Natural language and technical precision take priority over strict STE compliance.
+
+## Model shortcuts
+
+- "deepseek" means `opencode-go/deepseek-v4.1-flash` with thinking `max`, or `high` for small jobs.
+- "delegate to deepseek" or "let deepseek handle this" means launch a `general-purpose` subagent with that model.
