@@ -14,9 +14,15 @@ Read this file before adding, removing, replacing, or updating a skill.
 
 ## Pizza-owned skills
 
-Pizza currently owns no skills. The `skills/` entry stays in the package manifest, so adding `skills/<name>/SKILL.md` is enough to publish a new personal skill.
+Pizza ships the personal skills listed below. The `skills/` entry stays in the package manifest, so adding `skills/<name>/SKILL.md` is enough to publish a new personal skill.
 
 The `deepwiki` skill was removed when DeepWiki research was dropped from this setup.
+
+### `skill-creator`
+
+Creates, updates, reviews, and validates Agent Skills specifically for Pi, including Pi discovery, placement, frontmatter, progressive disclosure, and package integration.
+
+Source: [`skills/skill-creator/`](skills/skill-creator/)
 
 ## Third-party skill references
 
