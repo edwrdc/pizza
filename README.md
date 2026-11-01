@@ -33,7 +33,9 @@ pi update --extensions
 
 Pizza-owned skills are listed in [`SKILLS.md`](SKILLS.md) and loaded from `skills/*/SKILL.md`. A user-scoped Pizza install makes them global across Pi projects. Use `pi config` to enable or disable individual skills.
 
-Third-party skills used alongside Pizza are listed in [`SKILLS.md`](SKILLS.md). The list is documentation only. Pizza does not install or manage those skills.
+Third-party skills used alongside Pizza are listed in [`SKILLS.md`](SKILLS.md). The list is documentation only. Pizza does not install, update, or remove those skills.
+
+Two third-party skills are vendored unchanged under `skills/` because the `svelte-file-editor` agent depends on them: `svelte-code-writer` and `svelte-core-bestpractices`. `SKILLS.md` records their upstream commit and how to refresh them.
 
 ### Supporting configuration
 

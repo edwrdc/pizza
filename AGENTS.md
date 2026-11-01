@@ -26,7 +26,7 @@ Community packages remain independent Pi package sources. Pizza may offer to ins
 
 Pizza treats Codex Conversion as an independent package. Multi Codex loads its usage client read-only; Codex Conversion 3.0.15+ validates subscription models by API and base URL, so numbered clone providers work without any patching.
 
-Third-party skills are also outside Pizza's ownership. Pizza records them in `SKILLS.md` for personal reference only and must not install, update, remove, migrate, or vendor them.
+Third-party skills are outside Pizza's ownership. Pizza records them in `SKILLS.md` for personal reference only and must not install, update, remove, or migrate them. Vendoring is a narrow exception: only when a Pizza agent definition depends on the skill. The Svelte skills in `skills/svelte-code-writer/` and `skills/svelte-core-bestpractices/` are vendored this way for `agents/svelte-file-editor.md`.
 
 ## Skills
 
@@ -36,7 +36,7 @@ Pizza-owned skills are declared through the root `pi.skills` manifest and are gl
 
 Current package skills are listed in `SKILLS.md` and discovered from direct `skills/<name>/SKILL.md` entries.
 
-Do not copy an unchanged third-party skill into `skills/`. Add it to the external references in `SKILLS.md` instead. Reference commands in that file are documentation for a future agent or user; Pizza must never execute them.
+Do not copy an unchanged third-party skill into `skills/`. Add it to the external references in `SKILLS.md` instead. A vendored skill exists only for a dependency of a Pizza agent definition; copy it unchanged from upstream, record the upstream commit in `SKILLS.md`, and refresh it by copying again rather than editing it. Reference commands in `SKILLS.md` are documentation for a future agent or user; Pizza must never execute them.
 
 ## Support files
 

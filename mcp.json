@@ -2,7 +2,7 @@
   "mcpServers": {
     "svelte": {
       "url": "https://mcp.svelte.dev/mcp",
-      "lifecycle": "lazy"
+      "description": "Official Svelte 5 and SvelteKit documentation, the svelte-autofixer check, and playground links"
     }
   }
 }

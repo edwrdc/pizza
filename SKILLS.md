@@ -7,8 +7,8 @@ Read this file before adding, removing, replacing, or updating a skill.
 ## Ownership policy
 
 - Pizza includes only personal skills that it owns or intentionally maintains.
-- Third-party skills remain outside the Pizza package.
-- Pizza does not install, update, remove, migrate, or vendor third-party skills.
+- Third-party skills stay outside the Pizza package, with one defined exception: a third-party skill may be vendored when a Pizza agent definition depends on it. Each vendored copy records its upstream path and commit, and is refreshed by hand.
+- Pizza still does not install, update, remove, or migrate loose third-party skills.
 - Installation commands below are references for a future user or coding agent. Pizza must not execute them.
 - Before using a reference command, verify it against the current upstream documentation.
 
@@ -24,6 +24,23 @@ Creates, updates, reviews, and validates Agent Skills specifically for Pi, inclu
 
 Source: [`skills/skill-creator/`](skills/skill-creator/)
 
+### `svelte-code-writer`
+
+Svelte documentation lookup and code analysis through the `@sveltejs/mcp` CLI. The delegated Svelte workflow in [`agents/svelte-file-editor.md`](agents/svelte-file-editor.md) uses it as the fallback when the Svelte MCP server is unreachable.
+
+- Source: [`skills/svelte-code-writer/`](skills/svelte-code-writer/)
+- Upstream: <https://github.com/sveltejs/ai-tools/tree/main/tools/skills/svelte-code-writer>
+- Vendored: `sveltejs/ai-tools` commit `75a688cd090b7b8326bfc988cf4ed69d5abd38fd` (2026-10-29)
+
+### `svelte-core-bestpractices`
+
+Svelte 5 reactivity, event, styling, and legacy-feature rules. Loaded for Svelte component and module work.
+
+- Source: [`skills/svelte-core-bestpractices/`](skills/svelte-core-bestpractices/)
+- Upstream: <https://github.com/sveltejs/ai-tools/tree/main/tools/skills/svelte-core-bestpractices>
+- Vendored: `sveltejs/ai-tools` commit `75a688cd090b7b8326bfc988cf4ed69d5abd38fd` (2026-10-29)
+- Note: `SKILL.md` links `references/*.md` inside the skill directory. Keep those files when updating.
+
 ## Third-party skill references
 
 These skills may be installed independently as loose global skills or through separate Pi packages. Their presence is not required or managed by Pizza.
@@ -36,7 +53,7 @@ Stress-tests plans and decisions with a design-tree interview.
 - Reference command:
 
   ```bash
-  pnx skills@latest add mattpocock/skills --skill grilling --agent pi --global --yes
+  npx skills@latest add mattpocock/skills --skill grilling --agent pi --global --yes
   ```
 
 ### `gh-stack`
@@ -47,7 +64,7 @@ Provides GitHub stacked PR workflow guidance.
 - Reference command:
 
   ```bash
-  pnx skills@latest add github/gh-stack --skill gh-stack --agent pi --global --yes
+  npx skills@latest add github/gh-stack --skill gh-stack --agent pi --global --yes
   ```
 
 ### `impeccable`
@@ -58,7 +75,7 @@ Provides frontend design guidance and interface review tools.
 - Reference command:
 
   ```bash
-  pnx skills@latest add pbakaus/impeccable --skill impeccable --agent pi --global --yes
+  npx skills@latest add pbakaus/impeccable --skill impeccable --agent pi --global --yes
   ```
 
 ### `show-me`
@@ -69,7 +86,7 @@ Provides image and screenshot display workflow guidance.
 - Reference command:
 
   ```bash
-  pnx skills@latest add humanlayer/skills --skill show-me --agent pi --global --yes
+  npx skills@latest add humanlayer/skills --skill show-me --agent pi --global --yes
   ```
 
 ### `pi-pstack` (package)
@@ -86,26 +103,15 @@ Provides pstack orchestration workflows adapted to reuse pi-subagents, including
 
 After installation, run `/pstack setup` and `/reload` to expose its bundled agent definitions.
 
-### `svelte-code-writer`
+### `svelte-mcp-feedback`
 
-Provides Svelte documentation lookup and code-analysis instructions.
+Reports cases where the Svelte MCP autofixer missed or mis-fixed a mistake the user corrected. Opt-in: it files issues in `sveltejs/ai-tools` with `gh`, or opens a prefilled issue form.
 
-- Upstream: <https://github.com/sveltejs/ai-tools/tree/main/tools/skills/svelte-code-writer>
+- Upstream: <https://github.com/sveltejs/ai-tools/tree/main/tools/skills/svelte-mcp-feedback>
 - Reference command:
 
   ```bash
-  pnx skills@latest add sveltejs/ai-tools --skill svelte-code-writer --agent pi --global --yes
-  ```
-
-### `svelte-core-bestpractices`
-
-Provides guidance for writing modern Svelte components and modules.
-
-- Upstream: <https://github.com/sveltejs/ai-tools/tree/main/tools/skills/svelte-core-bestpractices>
-- Reference command:
-
-  ```bash
-  pnx skills@latest add sveltejs/ai-tools --skill svelte-core-bestpractices --agent pi --global --yes
+  npx skills@latest add sveltejs/ai-tools --skill svelte-mcp-feedback --agent pi --global --yes
   ```
 
 ### `technical-writing`
@@ -117,7 +123,7 @@ Provides a layered technical-writing standard: Diátaxis document modes, Google 
 - Reference command:
 
   ```bash
-  pnx skills@latest add cursor/plugins --skill technical-writing --agent pi --global --yes
+  npx skills@latest add cursor/plugins --skill technical-writing --agent pi --global --yes
   ```
 
 - Local deviation: the installed copy omits `disable-model-invocation: true` from the frontmatter on purpose. Upstream sets that key, which hides the skill from automatic model selection in Pi. A reinstall restores the key, so remove it again after any install or update. The local copy is not tracked in `~/.agents/.skill-lock.json`, because the install was written by hand rather than by the `skills` CLI.
@@ -131,7 +137,7 @@ Provides a strict maintainability review rubric: structural simplification, abst
 - Reference command:
 
   ```bash
-  pnx skills@latest add cursor/plugins --skill thermo-nuclear-code-quality-review --agent pi --global --yes
+  npx skills@latest add cursor/plugins --skill thermo-nuclear-code-quality-review --agent pi --global --yes
   ```
 
 - Local deviation: the installed copy omits `disable-model-invocation: true` from the frontmatter on purpose. Upstream sets that key, which hides the skill from automatic model selection in Pi. A reinstall restores the key, so remove it again after any install or update. The local copy is not tracked in `~/.agents/.skill-lock.json`, because the install was written by hand rather than by the `skills` CLI.
@@ -152,4 +158,11 @@ The Pizza extension discovers owned skill names from the `skills/` directory. Do
 1. Add it to the third-party references above.
 2. Record its upstream repository and purpose.
 3. Optionally record a reference installation command.
-4. Do not copy the skill into `skills/` or add installation behavior to Pizza.
+4. Do not copy the skill into `skills/` or add installation behavior to Pizza. Vendoring is reserved for a skill a Pizza agent definition depends on, and it is recorded in the Pizza-owned section instead.
+
+### Update a vendored skill
+
+1. Compare the copy in `skills/<name>/` with upstream, including any `references/` or `scripts/` files.
+2. Copy the changed files over the local copy. Do not hand-edit vendored content, so the next update is a plain copy.
+3. Update the recorded upstream commit and date in the Pizza-owned section above.
+4. Run `/reload` and confirm the skill still lists in Pi.
