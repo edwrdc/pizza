@@ -1,6 +1,7 @@
 import type { ExtensionAPI, ExtensionCommandContext, ProviderConfig } from "@earendil-works/pi-coding-agent";
 import { getAgentDir, readStoredCredential } from "@earendil-works/pi-coding-agent";
 import type { Model } from "@earendil-works/pi-ai";
+import { getApiProvider } from "@earendil-works/pi-ai/compat";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { formatAccounts, formatStatus, formatUsage } from "./admin.ts";
@@ -155,6 +156,13 @@ function buildProvider(origin: string): ProviderConfig {
 		api: "openai-responses",
 		apiKey: `$${PROXY_KEY_ENV}`,
 		models,
+		// Codex Conversion's native compaction v2 only streams through a provider
+		// that registers streamSimple; this delegates to the handler Pi already uses.
+		streamSimple: (model, context, options) => {
+			const api = getApiProvider(model.api);
+			if (!api) throw new Error(`No API provider registered for api: ${model.api}`);
+			return api.streamSimple(model, context, options);
+		},
 		refreshModels: async (context) => {
 			const cached = (context.stored?.models ?? []).filter((model): model is Model<"openai-responses"> =>
 				model.provider === PROVIDER_ID && model.api === "openai-responses" && model.baseUrl === `${origin}/v1` && !known.has(model.id),

@@ -73,6 +73,8 @@ try {
 	assert.equal(registered.name, "Underclass");
 	assert.equal(registered.baseUrl, "https://underclass.edwrdc.me/v1");
 	assert(registered.auth?.apiKey, "provider must expose api-key auth");
+	// Codex Conversion's native compaction v2 resolves this registration field.
+	assert.equal(typeof runtime.getRegisteredProviderConfig("underclass").streamSimple, "function");
 	// No key: the vendored codex catalog is registered as-is.
 	const seeded = registered.getModels();
 	assert.deepEqual(seeded.map((model) => model.id), vendoredIds);
