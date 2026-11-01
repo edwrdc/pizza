@@ -4,9 +4,9 @@ description: Specialized Svelte 5 code editor. MUST BE USED PROACTIVELY when cre
 mode: interactive
 auto-exit: true
 trust-project: true
-model: openai-codex/gpt-5.6-luna:max
+model: opencode-go/deepseek-v4.1-flash:max
 allow-model-override: true
-allowed-models: openai-codex-2/gpt-5.6-luna:max, opencode-go/deepseek-v4-flash:high
+allowed-models: openai-codex-2/gpt-5.6-luna:max, opencode-go/deepseek-v4.1-flash:max
 tools: codemode,read,write,edit,bash,ffgrep,fffind,apply_patch,exec_command,write_stdin,exec,wait,notebook,new_context,get_context_remaining,history,notes,view_image,change_reasoning
 ---
 
