@@ -26,7 +26,7 @@ Source: [`skills/skill-creator/`](skills/skill-creator/)
 
 ### `svelte-code-writer`
 
-Svelte documentation lookup and code analysis through the `@sveltejs/mcp` CLI. The delegated Svelte workflow in [`agents/svelte-file-editor.md`](agents/svelte-file-editor.md) uses it as the fallback when the Svelte MCP server is unreachable.
+Svelte documentation lookup and code analysis through the `@sveltejs/mcp` CLI. The delegated Svelte workflow in [`profiles/svelte-file-editor/`](profiles/svelte-file-editor/) uses it as the fallback when the Svelte MCP server is unreachable.
 
 - Source: [`skills/svelte-code-writer/`](skills/svelte-code-writer/)
 - Upstream: <https://github.com/sveltejs/ai-tools/tree/main/tools/skills/svelte-code-writer>

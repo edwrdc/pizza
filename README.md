@@ -39,7 +39,9 @@ Two third-party skills are vendored unchanged under `skills/` because the `svelt
 
 ### Supporting configuration
 
-Pizza ships the definitions under `agents/*.md` and `mcp.json` even though Pi's package manifest does not natively register them.
+Pizza ships the agent profiles under `profiles/<name>/` and `mcp.json` even though Pi's package manifest does not natively register them.
+
+Each profile directory holds `profile.json` and `prompt.md`. `/pizza setup` links those files into `<agent-dir>/shepherdr/profiles/<name>/`, which is where the Shepherdr extension reads them. The profile directory itself is created by setup and is not a symlink, because Shepherdr only loads real directories.
 
 The `/pizza setup` command links them from Pi's managed Git clone. Because the links target the managed clone, package updates update their contents without recopying them.
 
@@ -106,7 +108,7 @@ Before removing Pizza itself, unlink its support files while the `/pizza` comman
 /pizza unlink
 ```
 
-Then run `pi remove git:github.com/edwrdc/pizza`. If Pizza was already removed, inspect the active Pi agent directory (`$PI_CODING_AGENT_DIR` or `~/.pi/agent`). Remove only dangling symlinks under `agents/` whose targets point into Pizza's package, plus the `mcp.json` symlink if it points into Pizza. Do not delete regular files.
+Then run `pi remove git:github.com/edwrdc/pizza`. If Pizza was already removed, inspect the active Pi agent directory (`$PI_CODING_AGENT_DIR` or `~/.pi/agent`). Remove only dangling symlinks under `shepherdr/profiles/` whose targets point into Pizza's package, plus the `mcp.json` symlink if it points into Pizza. Do not delete regular files.
 
 ## Underclass
 

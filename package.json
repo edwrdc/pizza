@@ -1,6 +1,6 @@
 {
   "name": "pizza",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Personal Pi distribution package with skills, support configuration, and optional community packages",
   "keywords": ["pi-package"],
   "type": "module",

@@ -17,13 +17,25 @@ function filesUnder(path) {
 	});
 }
 
+function linkGone(path) {
+	try {
+		lstatSync(path);
+		return false;
+	} catch {
+		return true;
+	}
+}
+
 try {
 	mkdirSync(join(agentDir, "agents"), { recursive: true });
+	mkdirSync(join(agentDir, "shepherdr", "profiles", "retired"), { recursive: true });
 	mkdirSync(join(sharedSkills, "grilling"), { recursive: true });
 	writeFileSync(join(sharedSkills, "grilling", "marker"), "external skill");
 	writeFileSync(join(agentDir, "mcp.json"), readFileSync(join(projectRoot, "mcp.json")));
+	// Retired pi-subagents link, retired profile link, and a user alias to a live profile file.
 	symlinkSync(join(projectRoot, "agents", "retired-agent.md"), join(agentDir, "agents", "retired-agent.md"));
-	symlinkSync(join(projectRoot, "agents", "general-purpose.md"), join(agentDir, "agents", "my-worker-alias.md"));
+	symlinkSync(join(projectRoot, "profiles", "gone", "profile.json"), join(agentDir, "shepherdr", "profiles", "retired", "profile.json"));
+	symlinkSync(join(projectRoot, "profiles", "scout", "prompt.md"), join(agentDir, "agents", "my-worker-alias.md"));
 
 	process.env.HOME = join(root, "home");
 	process.env.PI_CODING_AGENT_DIR = agentDir;
@@ -74,12 +86,15 @@ try {
 	};
 	await commands.get("pizza").handler("setup", ctx);
 
-	for (const name of ["general-purpose.md", "scout.md", "svelte-file-editor.md"]) {
-		const path = join(agentDir, "agents", name);
-		assert(existsSync(path) && lstatSync(path).isSymbolicLink(), `Missing discovered agent link: ${name}`);
+	for (const name of ["general-purpose", "scout", "svelte-file-editor"]) {
+		for (const file of ["profile.json", "prompt.md"]) {
+			const path = join(agentDir, "shepherdr", "profiles", name, file);
+			assert(existsSync(path) && lstatSync(path).isSymbolicLink(), `Missing profile link: ${name}/${file}`);
+		}
 	}
 	assert(lstatSync(join(agentDir, "mcp.json")).isSymbolicLink(), "MCP link was not installed");
-	assert(!existsSync(join(agentDir, "agents", "retired-agent.md")), "Retired Pizza agent link was not removed");
+	assert(linkGone(join(agentDir, "agents", "retired-agent.md")), "Retired pi-subagents link was not removed");
+	assert(linkGone(join(agentDir, "shepherdr", "profiles", "retired", "profile.json")), "Retired profile link was not removed");
 	assert(lstatSync(join(agentDir, "agents", "my-worker-alias.md")).isSymbolicLink(), "User-created agent alias was removed");
 	assert.equal(readFileSync(join(sharedSkills, "grilling", "marker"), "utf8"), "external skill");
 	assert(
@@ -112,8 +127,10 @@ try {
 	};
 	await commands.get("pizza").handler("unlink", ctx);
 	assert.equal(readFileSync(join(agentDir, "mcp.json"), "utf8"), "user replacement");
-	for (const name of ["general-purpose.md", "scout.md", "svelte-file-editor.md"]) {
-		assert(!existsSync(join(agentDir, "agents", name)), `Owned agent link survived unlink: ${name}`);
+	for (const name of ["general-purpose", "scout", "svelte-file-editor"]) {
+		for (const file of ["profile.json", "prompt.md"]) {
+			assert(linkGone(join(agentDir, "shepherdr", "profiles", name, file)), `Owned profile link survived unlink: ${name}/${file}`);
+		}
 	}
 	assert(lstatSync(join(agentDir, "agents", "my-worker-alias.md")).isSymbolicLink(), "User-created alias was removed by unlink");
 	assert.equal(reloads, 2);

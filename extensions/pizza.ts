@@ -3,7 +3,7 @@ import { BorderedLoader, CONFIG_DIR_NAME, DynamicBorder, getSettingsListTheme } 
 import { Container, type SettingItem, SettingsList, Text } from "@earendil-works/pi-tui";
 import { cpSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, renameSync, rmSync, symlinkSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PACKAGE_ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -11,18 +11,23 @@ const AGENT_DIR = resolveAgentDir();
 const USER_SETTINGS_PATH = join(AGENT_DIR, "settings.json");
 const PACKAGE_SKILL_NAMES = packageSkillNames();
 
-const SUPPORT_LINKS = [
-	...packageAgentNames().map((name) => ({
-		label: `agent ${name.replace(/\.md$/, "")}`,
-		source: join(PACKAGE_ROOT, "agents", name),
-		target: join(AGENT_DIR, "agents", name),
-	})),
+const PACKAGE_PROFILES = join(PACKAGE_ROOT, "profiles");
+const SHEPHERDR_PROFILES = join(AGENT_DIR, "shepherdr", "profiles");
+
+interface SupportLink {
+	label: string;
+	source: string;
+	target: string;
+}
+
+const SUPPORT_LINKS: SupportLink[] = [
+	...packageProfileLinks(),
 	{
 		label: "MCP configuration",
 		source: join(PACKAGE_ROOT, "mcp.json"),
 		target: join(AGENT_DIR, "mcp.json"),
 	},
-] as const;
+];
 
 interface CatalogPackage {
 	id: string;
@@ -49,8 +54,6 @@ interface SupportInspection {
 	state: LinkState;
 }
 
-type SupportLink = (typeof SUPPORT_LINKS)[number];
-
 function packageSkillNames(): string[] {
 	const root = join(PACKAGE_ROOT, "skills");
 	if (!pathExists(root)) return []; // Pizza may declare the manifest entry before it owns any skill.
@@ -60,12 +63,31 @@ function packageSkillNames(): string[] {
 		.sort();
 }
 
-function packageAgentNames(): string[] {
-	const root = join(PACKAGE_ROOT, "agents");
-	return readdirSync(root, { withFileTypes: true })
-		.filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-		.map((entry) => entry.name)
-		.sort();
+// Shepherdr profiles are directories of plain files, so link the files and let
+// setup create the directory. A symlinked directory is skipped by shepherdr's
+// profile loader, which only accepts real directories.
+function packageProfileLinks(): SupportLink[] {
+	let names: string[];
+	try {
+		names = readdirSync(PACKAGE_PROFILES, { withFileTypes: true })
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => entry.name)
+			.sort();
+	} catch {
+		return []; // Pizza may declare profiles before it owns any.
+	}
+
+	return names.flatMap((name) => {
+		const root = join(PACKAGE_PROFILES, name);
+		return readdirSync(root, { withFileTypes: true })
+			.filter((entry) => entry.isFile())
+			.map((entry) => ({
+				label: `profile ${name}/${entry.name}`,
+				source: join(root, entry.name),
+				target: join(SHEPHERDR_PROFILES, name, entry.name),
+			}))
+			.sort((left, right) => left.label.localeCompare(right.label));
+	});
 }
 
 function resolveAgentDir(): string {
@@ -107,15 +129,6 @@ function isOwnedSymlink(source: string, target: string): boolean {
 	return resolvedSymlinkTarget(target) === resolve(source);
 }
 
-function isPackageAgentSymlink(target: string): boolean {
-	const source = resolvedSymlinkTarget(target);
-	return source !== undefined
-		&& dirname(source) === resolve(PACKAGE_ROOT, "agents")
-		&& source.endsWith(".md")
-		&& basename(source) === basename(target)
-		&& !pathExists(source);
-}
-
 function pathExists(path: string): boolean {
 	try {
 		lstatSync(path);
@@ -144,24 +157,39 @@ function inspectSupport(): SupportInspection[] {
 	return SUPPORT_LINKS.map(inspectLink);
 }
 
-function staleAgentLinks(): SupportLink[] {
-	const root = join(AGENT_DIR, "agents");
-	const currentTargets = new Set(SUPPORT_LINKS.map((entry) => resolve(entry.target)));
+function symlinksUnder(root: string, depth: number): string[] {
+	if (depth === 0) return [];
+	let entries;
 	try {
-		return readdirSync(root, { withFileTypes: true })
-			.filter((entry) => entry.isSymbolicLink() && entry.name.endsWith(".md"))
-			.map((entry) => {
-				const target = join(root, entry.name);
-				return {
-					label: `retired agent ${entry.name.replace(/\.md$/, "")}`,
-					source: resolvedSymlinkTarget(target) ?? "",
-					target,
-				};
-			})
-			.filter((entry) => !currentTargets.has(resolve(entry.target)) && isPackageAgentSymlink(entry.target));
+		entries = readdirSync(root, { withFileTypes: true });
 	} catch {
 		return [];
 	}
+	return entries.flatMap((entry) => {
+		const path = join(root, entry.name);
+		if (entry.isSymbolicLink()) return [path];
+		return entry.isDirectory() ? symlinksUnder(path, depth - 1) : [];
+	});
+}
+
+// Links this package installed whose source a Pizza update removed. `agents/` is
+// the retired pi-subagents layout; profile files sit one directory deeper.
+function staleSupportLinks(): SupportLink[] {
+	const currentTargets = new Set(SUPPORT_LINKS.map((entry) => resolve(entry.target)));
+	const ownedRoots = [join(PACKAGE_ROOT, "agents"), PACKAGE_PROFILES].map((root) => resolve(root) + sep);
+	const stale: SupportLink[] = [];
+
+	for (const target of [
+		...symlinksUnder(join(AGENT_DIR, "agents"), 1),
+		...symlinksUnder(SHEPHERDR_PROFILES, 2),
+	]) {
+		if (currentTargets.has(resolve(target))) continue;
+		const source = resolvedSymlinkTarget(target);
+		if (source === undefined || !ownedRoots.some((root) => source.startsWith(root)) || pathExists(source)) continue;
+		stale.push({ label: `retired ${relative(AGENT_DIR, target)}`, source, target });
+	}
+
+	return stale;
 }
 
 function looseSkills(): string[] {
@@ -247,9 +275,10 @@ function installSupportLinks(): string[] {
 		throw error;
 	}
 
-	// These are symlinks into this package whose source agent was removed by an update.
-	for (const entry of staleAgentLinks()) {
-		if (isPackageAgentSymlink(entry.target)) rmSync(entry.target);
+	// These are symlinks into this package whose source a Pizza update removed.
+	for (const entry of staleSupportLinks()) {
+		// Revalidate so a replacement file written during confirmation is never removed.
+		if (!pathExists(entry.source) && resolvedSymlinkTarget(entry.target) === entry.source) rmSync(entry.target);
 	}
 
 	return backups;
@@ -462,7 +491,7 @@ async function runPackageSelector(pi: ExtensionAPI, ctx: ExtensionCommandContext
 function doctorReport(ctx: ExtensionContext): { healthy: boolean; text: string } {
 	const inspections = inspectSupport();
 	const duplicates = looseSkills();
-	const staleLinks = staleAgentLinks();
+	const staleLinks = staleSupportLinks();
 	const problems = inspections.filter((entry) => entry.state !== "linked");
 	const installed = installedCatalogIds(ctx);
 	const standaloneRemovalLines = standaloneMultiCodexRemovalLines(ctx);
@@ -490,7 +519,7 @@ function doctorReport(ctx: ExtensionContext): { healthy: boolean; text: string }
 async function setup(pi: ExtensionAPI, ctx: ExtensionCommandContext, assumeYes: boolean): Promise<void> {
 	const inspections = inspectSupport();
 	const duplicates = looseSkills();
-	const staleLinks = staleAgentLinks();
+	const staleLinks = staleSupportLinks();
 	const conflicts = inspections.filter((entry) => entry.state === "conflict");
 	const changes = inspections.filter((entry) => entry.state !== "linked").length + duplicates.length + staleLinks.length;
 
@@ -500,7 +529,7 @@ async function setup(pi: ExtensionAPI, ctx: ExtensionCommandContext, assumeYes: 
 			const details = [
 				`${inspections.filter((entry) => entry.state !== "linked").length} support link(s)`,
 				`${duplicates.length} loose skill director${duplicates.length === 1 ? "y" : "ies"} to migrate`,
-				...(staleLinks.length > 0 ? [`${staleLinks.length} retired agent link(s) to remove`] : []),
+				...(staleLinks.length > 0 ? [`${staleLinks.length} retired support link(s) to remove`] : []),
 				...(conflicts.length > 0 ? [`${conflicts.length} conflicting file(s) will be backed up`] : []),
 			].join("\n");
 			approved = await ctx.ui.confirm("Set up Pizza?", details);
@@ -530,7 +559,7 @@ async function setup(pi: ExtensionAPI, ctx: ExtensionCommandContext, assumeYes: 
 }
 
 async function unlinkSupport(ctx: ExtensionCommandContext, assumeYes: boolean): Promise<void> {
-	const owned = [...SUPPORT_LINKS.filter((entry) => isOwnedSymlink(entry.source, entry.target)), ...staleAgentLinks()];
+	const owned = [...SUPPORT_LINKS.filter((entry) => isOwnedSymlink(entry.source, entry.target)), ...staleSupportLinks()];
 	if (owned.length === 0) {
 		ctx.ui.notify("No Pizza-owned support links found", "info");
 		return;
@@ -566,7 +595,7 @@ export default function pizzaExtension(pi: ExtensionAPI) {
 				"warning",
 			);
 		}
-		if (inspectSupport().some((entry) => entry.state !== "linked") || looseSkills().length > 0 || staleAgentLinks().length > 0) {
+		if (inspectSupport().some((entry) => entry.state !== "linked") || looseSkills().length > 0 || staleSupportLinks().length > 0) {
 			ctx.ui.notify("Pizza needs setup. Run /pizza setup when ready.", "info");
 		}
 	});

@@ -1,9 +1,10 @@
 [
   {
-    "id": "pi-subagents",
-    "label": "Pi Subagents",
-    "source": "git:github.com/edxeth/pi-subagents",
-    "description": "Named background and interactive agents, including Pizza's packaged agent definitions."
+    "id": "pi-shepherdr",
+    "label": "Shepherdr",
+    "source": "npm:@howaboua/pi-shepherdr",
+    "description": "Persistent blocking and asynchronous agents through Herdr. Required by Pizza's packaged agent profiles.",
+    "defaultSelected": true
   },
   {
     "id": "pi-mcp-adapter",
@@ -39,7 +40,7 @@
     "id": "pi-pstack",
     "label": "Pi Pstack",
     "source": "git:github.com/edwrdc/pi-pstack",
-    "description": "Pstack workflows adapted to reuse pi-subagents, with private role-based model routing and safe fallback handling."
+    "description": "Pstack workflows adapted to reuse pi-subagents, with private role-based model routing and safe fallback handling. Requires pi-subagents, so it is incompatible with a Shepherdr-only setup."
   },
   {
     "id": "codex-conversion",

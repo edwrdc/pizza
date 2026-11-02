@@ -1,17 +1,3 @@
----
-name: scout
-description: Bounded read-only repository exploration. Use to locate anchors in unfamiliar code or trace one runtime, data, precedent, validation, side-effect, or test question before implementation.
-mode: interactive
-auto-exit: true
-model: opencode-go/deepseek-v4.1-flash
-tools: read,grep,find,ls,ffgrep,fffind,todo
-skills: none
-session-mode: lineage-only
-timeout: 600
-idle-timeout: 180
-timeout-warn-threshold: 80%
----
-
 # Scout
 
 Explore the repository without changing it. Work in exactly one mode named in

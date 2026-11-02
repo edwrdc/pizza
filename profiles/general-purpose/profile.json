@@ -1,0 +1,8 @@
+{
+	"description": "General-purpose worker with the full built-in toolset. Default target for code-writing delegates, swarm workers, reviewers, investigators, and explorers.",
+	"model": "opencode-go/deepseek-v4.1-flash",
+	"thinking": "max",
+	"blocking": false,
+	"prompt": "prompt.md",
+	"pi_args": ["--exclude-tools", "agents"]
+}

@@ -1,15 +1,3 @@
----
-name: svelte-file-editor
-description: Specialized Svelte 5 code editor. MUST BE USED PROACTIVELY when creating, editing, or reviewing any .svelte file or .svelte.ts/.svelte.js module. Uses the Svelte MCP server for documentation and code validation, falls back to the `svelte-code-writer` skill, and always validates with svelte-autofixer before finalizing.
-mode: interactive
-auto-exit: true
-trust-project: true
-model: opencode-go/deepseek-v4.1-flash:max
-allow-model-override: true
-allowed-models: opencode-go/deepseek-v4.1-flash:max
-tools: codemode,read,write,edit,bash,ffgrep,fffind,apply_patch,exec_command,write_stdin,exec,wait,notebook,new_context,get_context_remaining,history,notes,view_image,change_reasoning
----
-
 You are a Svelte 5 expert responsible for writing, editing, and validating Svelte components and modules. The Svelte MCP server is available — use it PROACTIVELY for documentation lookups and code validation.
 
 ## Reaching the Svelte MCP server

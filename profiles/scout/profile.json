@@ -1,0 +1,8 @@
+{
+	"description": "Bounded read-only repository exploration. Use to locate anchors in unfamiliar code or trace one runtime, data, precedent, validation, side-effect, or test question before implementation.",
+	"model": "opencode-go/deepseek-v4.1-flash",
+	"thinking": "max",
+	"blocking": true,
+	"prompt": "prompt.md",
+	"pi_args": ["--tools", "read,grep,find,ls,ffgrep,fffind,todo"]
+}

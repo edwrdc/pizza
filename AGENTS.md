@@ -19,14 +19,14 @@ Pizza owns:
 - `extensions/codex-multi-account/`
 - `extensions/underclass/`
 - personal package skills under `skills/`
-- support files under `agents/` and `mcp.json`
+- support files under `profiles/` and `mcp.json`
 - the installation catalog in `catalog/community-packages.json`
 
 Community packages remain independent Pi package sources. Pizza may offer to install them but must not vendor, update, disable, or remove them itself.
 
 Pizza treats Codex Conversion as an independent package. Multi Codex loads its usage client read-only; Codex Conversion 3.0.15+ validates subscription models by API and base URL, so numbered clone providers work without any patching.
 
-Third-party skills are outside Pizza's ownership. Pizza records them in `SKILLS.md` for personal reference only and must not install, update, remove, or migrate them. Vendoring is a narrow exception: only when a Pizza agent definition depends on the skill. The Svelte skills in `skills/svelte-code-writer/` and `skills/svelte-core-bestpractices/` are vendored this way for `agents/svelte-file-editor.md`.
+Third-party skills are outside Pizza's ownership. Pizza records them in `SKILLS.md` for personal reference only and must not install, update, remove, or migrate them. Vendoring is a narrow exception: only when a Pizza agent definition depends on the skill. The Svelte skills in `skills/svelte-code-writer/` and `skills/svelte-core-bestpractices/` are vendored this way for `profiles/svelte-file-editor/`.
 
 ## Skills
 
@@ -56,7 +56,7 @@ The pantry is install-only. Package removal and updating remain Pi responsibilit
 - Third-party skill reference: update `SKILLS.md` only. Do not add installer behavior to Pizza.
 - Pizza setup behavior: update `extensions/pizza.ts`.
 - Multi Codex behavior: update `extensions/codex-multi-account/`.
-- Agent definition: add a top-level `.md` file under `agents/`; Pizza setup discovers direct `agents/*.md` entries.
+- Agent definition: add `profiles/<name>/profile.json` plus `prompt.md`; Pizza setup links the files into `<agent-dir>/shepherdr/profiles/<name>/`. Shepherdr reads the profile directory, so setup creates it and never symlinks it.
 - MCP server: update `mcp.json`.
 - Community suggestion: update `catalog/community-packages.json`.
 
