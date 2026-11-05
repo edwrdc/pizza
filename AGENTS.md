@@ -19,7 +19,7 @@ Pizza owns:
 - `extensions/codex-multi-account/`
 - `extensions/underclass/`
 - personal package skills under `skills/`
-- support files under `profiles/` and `mcp.json`
+- support files under `profiles/`, `mcp.json`, and `GLOBAL_AGENTS.md`
 - the installation catalog in `catalog/community-packages.json`
 
 Community packages remain independent Pi package sources. Pizza may offer to install them but must not vendor, update, disable, or remove them itself.
@@ -58,6 +58,7 @@ The pantry is install-only. Package removal and updating remain Pi responsibilit
 - Multi Codex behavior: update `extensions/codex-multi-account/`.
 - Agent definition: add `profiles/<name>/profile.json` plus `prompt.md`; Pizza setup links the files into `<agent-dir>/shepherdr/profiles/<name>/`. Shepherdr reads the profile directory, so setup creates it and never symlinks it.
 - MCP server: update `mcp.json`.
+- Global agent instruction: update `GLOBAL_AGENTS.md`.
 - Community suggestion: update `catalog/community-packages.json`.
 
 Run focused validation before committing. Changes become available after push plus `pi update --extensions` and `/reload` where needed.

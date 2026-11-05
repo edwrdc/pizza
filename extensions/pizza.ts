@@ -27,6 +27,11 @@ const SUPPORT_LINKS: SupportLink[] = [
 		source: join(PACKAGE_ROOT, "mcp.json"),
 		target: join(AGENT_DIR, "mcp.json"),
 	},
+	{
+		label: "global agent instructions",
+		source: join(PACKAGE_ROOT, "GLOBAL_AGENTS.md"),
+		target: join(AGENT_DIR, "AGENTS.md"),
+	},
 ];
 
 interface CatalogPackage {

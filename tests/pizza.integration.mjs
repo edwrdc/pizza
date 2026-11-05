@@ -93,6 +93,7 @@ try {
 		}
 	}
 	assert(lstatSync(join(agentDir, "mcp.json")).isSymbolicLink(), "MCP link was not installed");
+	assert(lstatSync(join(agentDir, "AGENTS.md")).isSymbolicLink(), "Global instructions link was not installed");
 	assert(linkGone(join(agentDir, "agents", "retired-agent.md")), "Retired pi-subagents link was not removed");
 	assert(linkGone(join(agentDir, "shepherdr", "profiles", "retired", "profile.json")), "Retired profile link was not removed");
 	assert(lstatSync(join(agentDir, "agents", "my-worker-alias.md")).isSymbolicLink(), "User-created agent alias was removed");
@@ -127,6 +128,7 @@ try {
 	};
 	await commands.get("pizza").handler("unlink", ctx);
 	assert.equal(readFileSync(join(agentDir, "mcp.json"), "utf8"), "user replacement");
+	assert(linkGone(join(agentDir, "AGENTS.md")), "Owned global instructions link survived unlink");
 	for (const name of ["general-purpose", "scout", "svelte-file-editor"]) {
 		for (const file of ["profile.json", "prompt.md"]) {
 			assert(linkGone(join(agentDir, "shepherdr", "profiles", name, file)), `Owned profile link survived unlink: ${name}/${file}`);

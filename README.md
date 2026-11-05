@@ -16,7 +16,7 @@ Then start Pi and run:
 
 `/pizza setup`:
 
-1. Links Pizza's agent definitions and MCP configuration into the active Pi agent directory.
+1. Links Pizza's agent definitions, MCP configuration, and global agent instructions into the active Pi agent directory.
 2. Migrates loose copies of Pizza-owned skills from Pi and shared Agent Skills directories into a timestamped backup so the package copies do not collide.
 3. Opens the Pizza package pantry, where optional community packages can be installed independently.
 4. Reloads Pi after changes.
@@ -44,6 +44,12 @@ Pizza ships the agent profiles under `profiles/<name>/` and `mcp.json` even thou
 Each profile directory holds `profile.json` and `prompt.md`. `/pizza setup` links those files into `<agent-dir>/shepherdr/profiles/<name>/`, which is where the Shepherdr extension reads them. The profile directory itself is created by setup and is not a symlink, because Shepherdr only loads real directories.
 
 The `/pizza setup` command links them from Pi's managed Git clone. Because the links target the managed clone, package updates update their contents without recopying them.
+
+### Global agent instructions
+
+[`GLOBAL_AGENTS.md`](GLOBAL_AGENTS.md) holds instructions that apply in every project. `/pizza setup` links it to `<agent-dir>/AGENTS.md`, and `/pizza unlink` removes only that link.
+
+Pi loads `<agent-dir>/AGENTS.md` as a context file, so a project's own `AGENTS.md` adds to it and never replaces it. An `AGENTS.override.md` overrides files only in its own directory. If `<agent-dir>/AGENTS.md` already exists and is not a Pizza link, setup moves it into `<agent-dir>/pizza-backups/` first.
 
 ### Exploration routing prompt
 
