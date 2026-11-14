@@ -18,6 +18,7 @@ Pizza owns:
 - `extensions/pizza.ts`
 - `extensions/codex-multi-account/`
 - `extensions/underclass/`
+- `extensions/egm/`
 - personal package skills under `skills/`
 - support files under `profiles/`, `mcp.json`, and `GLOBAL_AGENTS.md`
 - the installation catalog in `catalog/community-packages.json`
@@ -56,6 +57,7 @@ The pantry is install-only. Package removal and updating remain Pi responsibilit
 - Third-party skill reference: update `SKILLS.md` only. Do not add installer behavior to Pizza.
 - Pizza setup behavior: update `extensions/pizza.ts`.
 - Multi Codex behavior: update `extensions/codex-multi-account/`.
+- Elephant-Goldfish workflow and role settings: update `extensions/egm/`. Its generated Shepherdr profiles are writable files in the active agent directory, not package support symlinks.
 - Agent definition: add `profiles/<name>/profile.json` plus `prompt.md`; Pizza setup links the files into `<agent-dir>/shepherdr/profiles/<name>/`. Shepherdr reads the profile directory, so setup creates it and never symlinks it.
 - MCP server: update `mcp.json`.
 - Global agent instruction: update `GLOBAL_AGENTS.md`.

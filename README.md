@@ -75,6 +75,52 @@ Run `/reload` afterward. Pi uses a trusted project's `.pi/APPEND_SYSTEM.md` inst
 
 Add `--yes` to `setup` or `unlink` to approve filesystem changes without a confirmation dialog.
 
+## Elephant-Goldfish workflow
+
+Pizza includes a Pi adaptation of [Google's Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model). It is a design and review workflow, not a model provider. It uses `npm:@howaboua/pi-shepherdr` installed globally through Pi.
+
+```text
+/egm setup
+/egm settings
+/egm brainstorm Add webhook delivery
+/egm draft
+/egm review design_draft.md
+/egm implement design_draft.md
+/egm code-review design_draft.md
+/egm status
+/egm off
+```
+
+The main session is the Elephant. Choose its model with Pi's `/model` command. Brainstorming develops requirements and acceptance criteria without application code. Drafting writes one section at a time and waits for your approval. You can pass a local notes file to `/egm draft`.
+
+Design review runs five stages: architecture, comprehension, design critique, another architecture check, and implementation readiness. Each stage uses a fresh Goldfish session. After each report, choose whether to revise and rerun, continue, or stop. Review never approves implementation automatically. `/egm implement <design>` is your explicit approval to delegate that design to the implementer. `/egm code-review <design>` checks the resulting code against it.
+
+### Role settings
+
+`/egm setup` creates six dedicated Shepherdr profiles: `egm-zoom-out`, `egm-comprehension`, `egm-critic`, `egm-readiness`, `egm-code-review`, and `egm-implementer`. Their initial model and thinking level come from the main session at setup time. They do not follow later main-session model changes. `/egm settings` changes one role's model and supported thinking level. New workers use the change immediately.
+
+Settings live directly in `<agent-dir>/shepherdr/profiles/egm-*/profile.json`. These are writable files, not links into Pizza's managed clone. You can also edit their `model` and `thinking` fields directly. Setup preserves those two fields and restores the managed profile instructions and tool settings. It refuses unmarked directories, symlinked profiles, and malformed configuration rather than overwriting them. The `.pizza-egm` file marks each generated profile. `/pizza unlink` leaves these regular files alone.
+
+### Reports and limits
+
+Each review or implementation run gets a new `.egm-review-*` directory beside its design document. The main agent saves complete reports and a `progress.md` checkpoint there. EGM's active phase persists in the current session branch across reloads. `/egm off` removes its instructions but does not stop workers. Cancelling a blocking Shepherdr call also leaves its worker running. Ask the main agent to send `/quit` to that worker if you need to stop it.
+
+EGM asks the main agent to use Shepherdr's normal `agents` tool. Dispatch, checkpoints, report saving, and cleanup are model-mediated, not a deterministic background scheduler. EGM stops instead of substituting an in-session review when fresh workers or configured models are unavailable.
+
+Goldfish profiles disable shared Notes/history and expose only `read`, `grep`, `find`, and `ls`. They load only Shepherdr and Pizza's Underclass/Multi Codex provider extensions. This excludes shared Board, other extensions, skills, and automatic project/system prompts. Built-in models and Pizza providers work in reviewers. Models that require another provider extension are outside this version. The implementer uses the normal project environment.
+
+These tool limits are not a filesystem sandbox. The main session's no-code rule is an instruction, not a permission boundary. Use trusted projects. This first version combines some upstream reviewer personas. It does not port upstream skill installation, bootstrap, or drift reporting.
+
+### Installed Board check
+
+After installing `npm:@howaboua/pi-agent-board` and Shepherdr globally through Pi, run:
+
+```bash
+npm run test:egm-board
+```
+
+This optional check uses the installed Board package and the Node-based Pi SDK on `PATH`. It tests posts, shared membership, unread catch-up, active notifications, enablement, and Goldfish exclusion. It uses temporary sessions and a temporary SQLite archive with in-memory transport. It makes no model requests and does not change your Board settings or history. The browser viewer and live Herdr transport are outside this check.
+
 ## Multi Codex
 
 Pizza includes its own Multi Codex extension under `extensions/codex-multi-account/`. It registers `openai-codex-2`, `openai-codex-3`, and `openai-codex-4` so each additional ChatGPT subscription account has a separate credential entry.
