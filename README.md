@@ -179,10 +179,15 @@ Underclass uses Pi's legacy provider registration so PCC's proxy Responses Lite 
 /underclass accounts
 /underclass usage
 /underclass pcc
+/underclass claude
 /underclass help
 ```
 
 The default origin is `https://underclass.edwrdc.me`. Point at your own instance with the `UNDERCLASS_ORIGIN` environment variable or `/underclass setup`, which writes the origin to `extensions/underclass.json` in the active Pi agent directory. `/underclass pcc`, and `/underclass setup` with it, add `underclass` to `scope.additionalProviders` in `pi-codex-conversion.json` so Codex Conversion's Codex-shaped adapter activates for underclass models (Additional providers). Both secrets live in `auth.json`: the proxy key under `underclass` (written by `/login underclass`) and the admin `ui_token` under `underclass-admin` (written by `/underclass setup`).
+
+### Claude through underclass
+
+Claude subscriptions only accept requests from the official Claude Code client, so Pi cannot send `/v1/messages` to underclass itself. Install [pi-claude-bridge](https://github.com/elidickinson/pi-claude-bridge) (`pi install npm:pi-claude-bridge`), which runs the real Claude Code for `claude-bridge/...` models, then run `/underclass claude`. It writes the `claude-bridge` credential's `env` in `auth.json` so that Claude Code uses the underclass origin as `ANTHROPIC_BASE_URL` and the stored proxy key as `CLAUDE_CODE_OAUTH_TOKEN`, and blanks `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN`. Other `env` entries are kept. `/underclass setup` repeats the sync when the bridge is loaded or already configured, so changing the origin updates both providers. The sync never stores a key that exists only in `UNDERCLASS_PROXY_KEY`.
 
 ## Community package catalog
 

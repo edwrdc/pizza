@@ -385,6 +385,49 @@ try {
 	assert.match(notifications.at(-1).message, /not configured/);
 	assert(!existsSync(pccPath), "pcc must not create pi-codex-conversion.json");
 
+	// 4c. /underclass claude points pi-claude-bridge's Claude Code at underclass.
+	const authBeforeClaude = JSON.parse(readFileSync(authPath, "utf8"));
+	authBeforeClaude["claude-bridge"] = { type: "api_key", key: "not-used", env: { HTTPS_PROXY: "http://keep", ANTHROPIC_BASE_URL: "https://stale" } };
+	writeFileSync(authPath, JSON.stringify(authBeforeClaude));
+	notifications.length = 0;
+	await commands.get("underclass").handler("claude", commandCtx);
+	assert.equal(notifications.at(-1).level, "info");
+	assert.match(notifications.at(-1).message, /routes Claude Code through https:\/\/under\.example\.com\./);
+	assert.match(notifications.at(-1).message, /pi install npm:pi-claude-bridge/);
+	assert(!notifications.at(-1).message.includes("sk-underclass-key"), "notifications must not echo the proxy key");
+	const bridgeStored = JSON.parse(readFileSync(authPath, "utf8"));
+	assert.deepEqual(bridgeStored["claude-bridge"], {
+		type: "api_key",
+		key: "not-used",
+		env: {
+			HTTPS_PROXY: "http://keep",
+			ANTHROPIC_BASE_URL: "https://under.example.com",
+			CLAUDE_CODE_OAUTH_TOKEN: "sk-underclass-key",
+			ANTHROPIC_API_KEY: "",
+			ANTHROPIC_AUTH_TOKEN: "",
+		},
+	});
+	assert.deepEqual(bridgeStored.other, { type: "api_key", key: "keep" });
+	assert.equal(statSync(authPath).mode & 0o777, 0o600);
+	await commands.get("underclass").handler("claude", commandCtx);
+	assert.match(notifications.at(-1).message, /already routes/);
+
+	// Without a stored proxy key nothing is written, even if the env var is set.
+	const withoutProxy = JSON.parse(readFileSync(authPath, "utf8"));
+	const savedProxy = withoutProxy.underclass;
+	delete withoutProxy.underclass;
+	delete withoutProxy["claude-bridge"];
+	writeFileSync(authPath, JSON.stringify(withoutProxy));
+	process.env.UNDERCLASS_PROXY_KEY = "sk-env-only";
+	await commands.get("underclass").handler("claude", commandCtx);
+	delete process.env.UNDERCLASS_PROXY_KEY;
+	assert.equal(notifications.at(-1).level, "warning");
+	assert.match(notifications.at(-1).message, /\/login underclass/);
+	assert(!("claude-bridge" in JSON.parse(readFileSync(authPath, "utf8"))));
+	withoutProxy.underclass = savedProxy;
+	withoutProxy["claude-bridge"] = bridgeStored["claude-bridge"];
+	writeFileSync(authPath, JSON.stringify(withoutProxy));
+
 	// 5. setup merges the admin token into auth.json, preserves siblings, and
 	// runs the Codex Conversion add step.
 	writeFileSync(pccPath, JSON.stringify({ scope: { additionalProviders: [] }, sibling: { keep: true } }));
@@ -402,6 +445,9 @@ try {
 	const pccAfterSetup = JSON.parse(readFileSync(pccPath, "utf8"));
 	assert.deepEqual(pccAfterSetup.scope.additionalProviders, ["underclass"]);
 	assert.deepEqual(pccAfterSetup.sibling, { keep: true });
+	// An existing bridge credential follows the new origin.
+	assert.equal(stored["claude-bridge"].env.ANTHROPIC_BASE_URL, "https://self.example.com");
+	assert.match(notifications.at(-1).message, /claude-bridge now routes/);
 
 	// Failed discovery does not make setup reject after credentials were saved.
 	globalThis.fetch = async () => ({ ok: false, status: 503 });

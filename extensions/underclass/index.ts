@@ -9,6 +9,8 @@ import { CODEX_MODELS, type LocalCodexModel } from "./codex-models.ts";
 
 const PROVIDER_ID = "underclass";
 const ADMIN_CREDENTIAL_ID = "underclass-admin";
+// pi-claude-bridge reads per-provider env for its Claude Code child from this credential.
+const CLAUDE_BRIDGE_ID = "claude-bridge";
 const DEFAULT_ORIGIN = "https://underclass.edwrdc.me";
 const PROXY_KEY_ENV = "UNDERCLASS_PROXY_KEY";
 const ORIGIN_ENV = "UNDERCLASS_ORIGIN";
@@ -22,6 +24,7 @@ const HELP = [
 	"/underclass accounts  List accounts from admin state",
 	"/underclass usage     Show usage totals and top model groups",
 	"/underclass pcc       Add underclass to Codex Conversion's providers",
+	"/underclass claude    Route pi-claude-bridge's Claude Code through underclass",
 	"/underclass help      Show this help",
 ].join("\n");
 
@@ -277,6 +280,75 @@ function mergeCodexConversionProviders(): { message: string; level: "info" | "er
 	}
 }
 
+function objectField(value: unknown): Record<string, unknown> | undefined {
+	return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+}
+
+function claudeBridgeInstalled(ctx: ExtensionCommandContext): boolean {
+	return ctx.modelRegistry.getAll().some((model) => model.provider === CLAUDE_BRIDGE_ID);
+}
+
+/**
+ * @cc [owner:edwrdc,label:security] claude-bridge-sync
+ * Syncing MUST set the claude-bridge credential's env so Claude Code uses the underclass
+ * origin as ANTHROPIC_BASE_URL and the stored underclass proxy key as CLAUDE_CODE_OAUTH_TOKEN,
+ * and MUST blank ANTHROPIC_API_KEY and ANTHROPIC_AUTH_TOKEN. It MUST preserve other
+ * credentials and other env entries, write auth.json with mode 0600, and MUST NOT persist a
+ * proxy key that exists only in the environment.
+ */
+function syncClaudeBridge(origin: string): { message: string; level: "info" | "warning" | "error" } {
+	const path = authFilePath();
+	try {
+		const credentials = readJsonObject(path);
+		const proxy = objectField(credentials[PROVIDER_ID]);
+		const key = proxy?.type === "api_key" && typeof proxy.key === "string" ? proxy.key.trim() : "";
+		if (!key) {
+			return { message: "No underclass proxy key in auth.json; run /login underclass, then /underclass claude.", level: "warning" };
+		}
+		const existing = objectField(credentials[CLAUDE_BRIDGE_ID]);
+		const env = {
+			...objectField(existing?.env),
+			ANTHROPIC_BASE_URL: origin,
+			CLAUDE_CODE_OAUTH_TOKEN: key,
+			ANTHROPIC_API_KEY: "",
+			ANTHROPIC_AUTH_TOKEN: "",
+		};
+		const next = {
+			...existing,
+			type: "api_key",
+			key: existing?.type === "api_key" && typeof existing.key === "string" ? existing.key : "not-used",
+			env,
+		};
+		if (JSON.stringify(existing) === JSON.stringify(next)) {
+			return { message: `claude-bridge already routes through ${origin}.`, level: "info" };
+		}
+		credentials[CLAUDE_BRIDGE_ID] = next;
+		atomicWrite(path, JSON.stringify(credentials, null, 2));
+		return { message: `claude-bridge now routes Claude Code through ${origin}.`, level: "info" };
+	} catch (error) {
+		return { message: `Could not update claude-bridge credential: ${errorMessage(error)}`, level: "error" };
+	}
+}
+
+function claudeCommand(ctx: ExtensionCommandContext): void {
+	const result = syncClaudeBridge(resolveOrigin());
+	const hint = claudeBridgeInstalled(ctx) ? "" : "\npi-claude-bridge is not loaded; install it with: pi install npm:pi-claude-bridge";
+	ctx.ui.notify(`${result.message}${hint}`, result.level);
+}
+
+// Setup keeps an existing bridge in step with the origin, but only creates the
+// credential when the bridge is loaded.
+function setupClaudeBridge(origin: string, ctx: ExtensionCommandContext): string {
+	let configured = false;
+	try {
+		configured = objectField(readJsonObject(authFilePath())[CLAUDE_BRIDGE_ID]) !== undefined;
+	} catch {
+		// An unreadable auth.json is reported by the sync itself.
+	}
+	if (!configured && !claudeBridgeInstalled(ctx)) return "";
+	return `\n${syncClaudeBridge(origin).message}`;
+}
+
 async function setupCommand(pi: ExtensionAPI, ctx: ExtensionCommandContext): Promise<void> {
 	const current = resolveOrigin();
 	const originInput = await ctx.ui.input("Underclass origin", current);
@@ -298,10 +370,11 @@ async function setupCommand(pi: ExtensionAPI, ctx: ExtensionCommandContext): Pro
 
 	// Pi has no masked input dialog, so the admin token is typed in clear text.
 	const conversion = mergeCodexConversionProviders();
+	const bridge = setupClaudeBridge(origin, ctx);
 	const tokenInput = await ctx.ui.input("Underclass admin ui_token");
 	const token = tokenInput?.trim();
 	if (!token) {
-		ctx.ui.notify(`Origin saved to ${origin}. No admin token stored.\n${conversion.message}`, "warning");
+		ctx.ui.notify(`Origin saved to ${origin}. No admin token stored.\n${conversion.message}${bridge}`, "warning");
 		return;
 	}
 	try {
@@ -315,9 +388,9 @@ async function setupCommand(pi: ExtensionAPI, ctx: ExtensionCommandContext): Pro
 
 	try {
 		pi.registerProvider(PROVIDER_ID, buildProvider(origin));
-		ctx.ui.notify(`${await refreshCatalog(ctx)}\nAdmin token stored in auth.json as ${ADMIN_CREDENTIAL_ID}.\n${conversion.message}`, "info");
+		ctx.ui.notify(`${await refreshCatalog(ctx)}\nAdmin token stored in auth.json as ${ADMIN_CREDENTIAL_ID}.\n${conversion.message}${bridge}`, "info");
 	} catch (error) {
-		ctx.ui.notify(`Origin and admin token saved. Underclass refresh failed: ${errorMessage(error)}\n${conversion.message}`, "warning");
+		ctx.ui.notify(`Origin and admin token saved. Underclass refresh failed: ${errorMessage(error)}\n${conversion.message}${bridge}`, "warning");
 	}
 }
 
@@ -367,6 +440,9 @@ export default function underclassExtension(pi: ExtensionAPI): void {
 					ctx.ui.notify(conversion.message, conversion.level);
 					return;
 				}
+				case "claude":
+					claudeCommand(ctx);
+					return;
 				case undefined:
 					ctx.ui.notify(HELP, "info");
 					return;
