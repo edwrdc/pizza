@@ -1,7 +1,7 @@
 {
 	"description": "Specialized Svelte 5 code editor. MUST BE USED PROACTIVELY when creating, editing, or reviewing any .svelte file or .svelte.ts/.svelte.js module. Uses the Svelte MCP server for documentation and code validation, falls back to the `svelte-code-writer` skill, and always validates with svelte-autofixer before finalizing.",
-	"model": "opencode-go/deepseek-v4.1-flash",
-	"thinking": "max",
+	"model": "claude-bridge/claude-opus-5-5",
+	"thinking": "medium",
 	"blocking": false,
 	"prompt": "prompt.md",
 	"pi_args": [

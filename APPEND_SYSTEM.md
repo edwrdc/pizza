@@ -14,5 +14,6 @@ For user-facing explanations, loosely follow ASD-STE100 principles.
 
 ## Model shortcuts
 
-- "deepseek" means `opencode-go/deepseek-v4.1-flash` with thinking `max`, or `high` for small jobs.
-- "delegate to deepseek" or "let deepseek handle this" means launch a `general-purpose` subagent with that model.
+- "opus" means `claude-bridge/claude-opus-5-5` with thinking `medium`, or `high` for hard jobs.
+- "delegate to opus" or "let opus handle this" means launch a `general-purpose` subagent with that model.
+- Use only OpenAI (`underclass/...`, `openai-codex/...`) and Claude (`claude-bridge/...`) models. Do not use `opencode-go` or `anthropic/...` models.
