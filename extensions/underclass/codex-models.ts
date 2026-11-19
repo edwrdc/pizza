@@ -5,7 +5,8 @@
 // window instead of an input budget. Pizza therefore ships this list itself.
 //
 // Values mirror what Pi's openai-codex provider advertises: the builtin catalog plus
-// the supplementals from Codex Conversion 4.0.2 and GPT-6.1 Terra from 4.0.5.
+// the supplementals from Codex Conversion 4.0.2, GPT-6.1 Terra from 4.0.5,
+// and GPT-6.2 Sol and Astra from 5.0.1.
 // Responses-specific fields (api, baseUrl, compat, promptCache, samplingParams)
 // are intentionally excluded.
 
@@ -122,6 +123,26 @@ export const CODEX_MODELS: LocalCodexModel[] = [
 		maxTokens: 128000,
 		reasoning: true,
 		thinkingLevelMap: {"off":null,"minimal":null,"xhigh":"xhigh","max":"max"},
+	},
+	{
+		id: "gpt-6.2-sol",
+		name: "GPT-6.2 Sol",
+		input: ["text","image"],
+		cost: {"input":2,"output":10,"cacheRead":0.1,"cacheWrite":2.5,"tiers":[{"inputTokensAbove":272000,"input":4,"output":15,"cacheRead":0.2,"cacheWrite":5}]},
+		contextWindow: 500000,
+		maxTokens: 128000,
+		reasoning: true,
+		thinkingLevelMap: {"off":null,"minimal":"low","xhigh":"xhigh","max":"max"},
+	},
+	{
+		id: "gpt-6.2-astra",
+		name: "GPT-6.2 Astra",
+		input: ["text","image"],
+		cost: {"input":8,"output":40,"cacheRead":0.4,"cacheWrite":10,"tiers":[{"inputTokensAbove":272000,"input":16,"output":60,"cacheRead":0.8,"cacheWrite":20}]},
+		contextWindow: 272000,
+		maxTokens: 128000,
+		reasoning: true,
+		thinkingLevelMap: {"off":null,"minimal":"low","xhigh":"xhigh","max":"max"},
 	},
 	{
 		id: "gpt-daybreak-blue-latest",

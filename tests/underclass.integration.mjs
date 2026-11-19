@@ -26,9 +26,38 @@ const vendoredIds = [
 	"gpt-6-sol",
 	"gpt-6.1-sol",
 	"gpt-6.1-terra",
+	"gpt-6.2-sol",
+	"gpt-6.2-astra",
 	"gpt-daybreak-blue-latest",
 	"gpt-daybreak-red-latest",
 ];
+
+function assertGpt62Models(models) {
+	for (const expected of [
+		{
+			id: "gpt-6.2-sol", name: "GPT-6.2 Sol", contextWindow: 500_000,
+			cost: {
+				input: 2, output: 10, cacheRead: 0.1, cacheWrite: 2.5,
+				tiers: [{ inputTokensAbove: 272_000, input: 4, output: 15, cacheRead: 0.2, cacheWrite: 5 }],
+			},
+		},
+		{
+			id: "gpt-6.2-astra", name: "GPT-6.2 Astra", contextWindow: 272_000,
+			cost: {
+				input: 8, output: 40, cacheRead: 0.4, cacheWrite: 10,
+				tiers: [{ inputTokensAbove: 272_000, input: 16, output: 60, cacheRead: 0.8, cacheWrite: 20 }],
+			},
+		},
+	]) {
+		assert.partialDeepStrictEqual(models.find((model) => model.id === expected.id), {
+			...expected,
+			input: ["text", "image"],
+			maxTokens: 128_000,
+			reasoning: true,
+			thinkingLevelMap: { off: null, minimal: "low", xhigh: "xhigh", max: "max" },
+		});
+	}
+}
 
 const originalFetch = globalThis.fetch;
 process.env.PI_CODING_AGENT_DIR = agentDir;
@@ -78,6 +107,7 @@ try {
 	// No key: the vendored codex catalog is registered as-is.
 	const seeded = registered.getModels();
 	assert.deepEqual(seeded.map((model) => model.id), vendoredIds);
+	assertGpt62Models(seeded);
 	for (const model of seeded) {
 		assert.equal(model.provider, "underclass");
 		assert.equal(model.api, "openai-responses");
@@ -149,6 +179,8 @@ try {
 				{ id: "gpt-5.4", name: "GPT-5.4", context_window: 400_000, max_input_tokens: 272_000, max_output_tokens: 128_000, owned_by: "underclass-codex" },
 				{ id: "gpt-4.1", name: "GPT-4.1", owned_by: "underclass-copilot" },
 				{ id: "gpt-5.6-sol", name: "GPT-5.6 Sol", max_input_tokens: 999_999, max_output_tokens: 1, owned_by: "underclass-codex" },
+				{ id: "gpt-6.2-sol", name: "Discovered Sol", max_input_tokens: 999_999, max_output_tokens: 1, reasoning: false, owned_by: "underclass-codex" },
+				{ id: "gpt-6.2-astra", name: "Discovered Astra", max_input_tokens: 999_999, max_output_tokens: 1, reasoning: false, owned_by: "underclass-codex" },
 				{ id: "mystery-model" },
 				{ id: "mystery-model" },
 			] }) };
@@ -182,6 +214,7 @@ try {
 	assert.equal(vendoredGpt56.contextWindow, 272_000);
 	assert.equal(vendoredGpt56.maxTokens, 128_000);
 	assert.equal(vendoredGpt56.reasoning, true);
+	assertGpt62Models(models);
 
 	// Unknown ids fall back to text input, zero cost, and the constant defaults.
 	assert.partialDeepStrictEqual(models.find((model) => model.id === "mystery-model"), {
@@ -219,6 +252,7 @@ try {
 	assert.equal((await runtime.refresh()).errors.size, 0);
 	const refreshedIds = [...vendoredIds, "new-model"];
 	assert.deepEqual(discovered.getModels().map((model) => model.id), refreshedIds);
+	assertGpt62Models(discovered.getModels());
 	for (const failingFetch of [
 		async () => { throw new Error("network failure"); },
 		async () => ({ ok: false, status: 503 }),
@@ -228,6 +262,7 @@ try {
 		globalThis.fetch = failingFetch;
 		assert.equal((await runtime.refresh()).errors.has("underclass"), true);
 		assert.deepEqual(discovered.getModels().map((model) => model.id), refreshedIds);
+		assertGpt62Models(discovered.getModels());
 	}
 
 	const controller = new AbortController();
@@ -244,6 +279,7 @@ try {
 	await underclassExtension(pi);
 	assert.equal((await runtime.refresh({ allowNetwork: false })).errors.size, 0);
 	assert.deepEqual(runtime.getModels("underclass").map((model) => model.id), refreshedIds);
+	assertGpt62Models(runtime.getModels("underclass"));
 
 	// A new Pi runtime must restore the catalog before and after PCC's startup override.
 	const restarted = await ModelRuntime.create({ credentials, modelsPath });
@@ -253,6 +289,7 @@ try {
 	restarted.registerProvider("underclass", { api: "openai-responses", streamSimple: overlayStream });
 	await restarted.refresh({ allowNetwork: false });
 	assert.deepEqual(restarted.getAvailableSnapshot().filter((model) => model.provider === "underclass").map((model) => model.id), refreshedIds);
+	assertGpt62Models(restarted.getModels("underclass"));
 
 	// Switching origins must not restore models that would send requests to the old host.
 	writeFileSync(configPath, JSON.stringify({ origin: "https://other.example.com" }));
